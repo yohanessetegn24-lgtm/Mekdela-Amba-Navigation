@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ma-blue: #00204E;
+  --color-ma-gold: #C4A006;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}

@@ -1,0 +1,12 @@
+# .NET (Backend)
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+*.user
+appsettings.Development.json
+
+# React (Frontend)
+**/node_modules/
+**/dist/
+.DS_Store

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="MekdelaAmbaCampusNavigation.API/MekdelaAmbaCampusNavigation.API.csproj" Id="93d579f4-a5ac-466e-8133-bb0a6bafb838" />
+  <Project Path="MekdelaAmbaCampusNavigation.Application/MekdelaAmbaCampusNavigation.Application.csproj" Id="f9115de3-c2a7-4448-b686-b0e674da6cba" />
+  <Project Path="MekdelaAmbaCampusNavigation.Domain/MekdelaAmbaCampusNavigation.Domain.csproj" Id="e911fc8a-2bc9-4d18-958d-df9fb31e0b83" />
+  <Project Path="MekdelaAmbaCampusNavigation.Infrastructure/MekdelaAmbaCampusNavigation.Infrastructure.csproj" Id="c40759de-86c3-45cb-8707-861f5db17d77" />
+</Solution>
