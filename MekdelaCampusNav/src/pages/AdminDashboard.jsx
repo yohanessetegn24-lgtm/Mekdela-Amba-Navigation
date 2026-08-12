@@ -57,8 +57,7 @@ const AdminDashboard = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({});
 
-  const API_URL = "https://localhost:7086/api";
-
+  const API_URL = "http://localhost:5030/api";
   // Mock Data for Dashboard Graphs
   const usageData = [
     { name: 'Mon', visits: 400 }, { name: 'Tue', visits: 700 }, { name: 'Wed', visits: 550 },
