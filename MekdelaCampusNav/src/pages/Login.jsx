@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api'; // 🚀 አዲሱ ማእከላዊ API አገልግሎት
-import { LogIn, Lock, Mail, AlertCircle } from 'lucide-react';
+import api from '../services/api'; // 🚀 ማእከላዊ API አገልግሎት
+import { LogIn, Lock, Mail, AlertCircle, ChevronLeft } from 'lucide-react';
+// 🚀 ያንተ እውነተኛ ፎቶ
+import sidePhoto from '../assets/mekdelaambauniversity.jpg';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,88 +14,120 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // 🚀 አሁን አድራሻውን በሙሉ መጻፍ አያስፈልግም፣ api.js ራሱ ያውቀዋል
       const res = await api.post('/Auth/login', { email, password });
       
-      // መረጃውን በlocalStorage እናስቀምጥ
       localStorage.setItem('userRole', res.data.role);
       localStorage.setItem('userName', res.data.userName);
       localStorage.setItem('isLoggedIn', 'true');
 
-      // 🚀 ስማርት ሪዳይሬክት
       if (res.data.role === 'Admin') {
-        navigate('/admin/dashboard'); // አድሚን ከሆነ ወደ ዳሽቦርድ
+        navigate('/admin/dashboard'); 
       } else {
-        navigate('/campuses'); // ተማሪ ከሆነ ወደ ካምፓስ ምርጫ
+        navigate('/campuses'); 
       }
     } catch (err) {
-      // ስህተት ሲፈጠር ለተጠቃሚው ግልጽ መልእክት እናሳያለን
       setError('የመግቢያ ስህተት! እባክዎ ኢሜይልዎን ወይም ባክኤንድ መብራቱን ያረጋግጡ።');
     }
   };
 
   return (
-    <div className="min-h-screen bg-ma-blue flex items-center justify-center p-4">
-      <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl p-10 border-t-8 border-ma-gold">
+    <div className="min-h-screen flex bg-white font-sans italic font-bold overflow-hidden leading-none">
+      
+      {/* 📸 1. የግራ በኩል ክፍል - ደማቅ ሙሉ ፎቶ */}
+      <div className="hidden lg:block lg:w-1/2 relative h-screen">
+        <img 
+          src={sidePhoto} 
+          className="absolute inset-0 w-full h-full object-cover" 
+          alt="Mekdela Amba University" 
+        />
+        {/* ለጽሁፉ መታየት ብቻ በስሱ ከስር ጥላ (Gradient) ተጨምሯል */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
         
-        {/* የሎጎ እና የርዕስ ክፍል */}
-        <div className="flex flex-col items-center mb-8">
-           <div className="w-16 h-16 bg-ma-blue rounded-2xl flex items-center justify-center text-ma-gold shadow-lg mb-4">
-              <LogIn size={32} />
-           </div>
-           <h2 className="text-3xl font-black text-ma-blue text-center leading-none">Portal Login</h2>
-           <p className="text-center text-gray-400 text-[10px] mt-2 font-bold tracking-[3px] uppercase">
-              Mekdela Amba University
-           </p>
+        <div className="absolute bottom-16 left-12 text-white z-10 leading-none">
+          <h1 className="text-6xl font-black tracking-tighter uppercase leading-none italic drop-shadow-2xl">
+             Mekdela Amba <br/> 
+             <span className="text-ma-gold">University</span>
+          </h1>
+          <p className="text-xl font-medium mt-4 opacity-90 leading-none drop-shadow-lg">
+             Mekdela Amba University Campus Navigation Portal
+          </p>
         </div>
-        
-        {/* ስህተት ካለ ማሳያ */}
-        {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-2xl mb-6 flex items-center gap-3 text-xs font-bold border border-red-100 animate-pulse">
-            <AlertCircle size={18}/>
-            {error}
-          </div>
-        )}
-        
-        <form onSubmit={handleLogin} className="space-y-6">
-          {/* የኢሜይል ሳጥን */}
-          <div className="relative">
-            <Mail className="absolute left-4 top-4 text-gray-300" size={20} />
-            <input 
-              type="email" 
-              required 
-              onChange={(e) => setEmail(e.target.value)} 
-              className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-ma-gold outline-none font-bold text-ma-blue italic" 
-              placeholder="Email Address" 
-            />
-          </div>
-
-          {/* የፓስዎርድ ሳጥን */}
-          <div className="relative">
-            <Lock className="absolute left-4 top-4 text-gray-300" size={20} />
-            <input 
-              type="password" 
-              required 
-              onChange={(e) => setPassword(e.target.value)} 
-              className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-ma-gold outline-none font-bold text-ma-blue" 
-              placeholder="Password" 
-            />
-          </div>
-
-          {/* መግቢያ በተን */}
-          <button 
-            type="submit" 
-            className="w-full bg-ma-blue text-white py-5 rounded-[22px] font-black text-lg hover:bg-blue-900 transition-all shadow-xl shadow-blue-900/20 active:scale-95 transform tracking-widest uppercase italic"
-          >
-            Sign In Now
-          </button>
-        </form>
-
-        {/* የታችኛው ማሳሰቢያ */}
-        <p className="text-center text-gray-400 text-[10px] mt-8 font-medium">
-           © 2024 MAU CAMPUS NAVIGATION SYSTEM
-        </p>
       </div>
+
+      {/* 폼 2. የቀኝ በኩል ክፍል - የሎጊን ካርዱ (ምስል #4 ዲዛይን) */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-slate-50 relative">
+        
+        {/* የጀርባ ማስጌጫ */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-ma-gold/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-ma-blue/5 rounded-full blur-3xl"></div>
+
+        <div className="bg-white w-full max-w-md rounded-[50px] shadow-[0_25px_70px_rgba(0,32,78,0.15)] p-12 z-10 border-t-[14px] border-ma-gold animate-in zoom-in duration-500 leading-none">
+          
+          <div className="flex flex-col items-center mb-10 leading-none">
+             <div className="w-20 h-20 bg-ma-blue rounded-3xl flex items-center justify-center text-ma-gold shadow-2xl mb-6 border-b-4 border-ma-gold/50 leading-none">
+                <LogIn size={40} />
+             </div>
+             <h2 className="text-4xl font-black text-ma-blue tracking-tighter italic uppercase leading-none">Login</h2>
+             <p className="text-center text-gray-400 text-[10px] mt-3 font-bold tracking-[4px] uppercase leading-none italic">
+                Enter your credentials
+             </p>
+          </div>
+          
+          {error && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-2xl mb-8 flex items-center gap-3 text-xs font-black border border-red-100 animate-pulse leading-none">
+              <AlertCircle size={18}/>
+              {error}
+            </div>
+          )}
+          
+          <form onSubmit={handleLogin} className="space-y-6 leading-none">
+            {/* ኢሜይል */}
+            <div className="space-y-3 leading-none">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 leading-none">Institutional Email</label>
+              <div className="relative leading-none">
+                <Mail className="absolute left-5 top-5 text-gray-300" size={20} />
+                <input 
+                  type="email" 
+                  required 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  className="w-full pl-14 pr-6 py-5 bg-gray-50 border-none rounded-3xl focus:ring-4 focus:ring-ma-gold/20 outline-none font-bold text-ma-blue italic shadow-inner leading-none" 
+                  placeholder="name@gmail.com" 
+                />
+              </div>
+            </div>
+
+            {/* ፓስዎርድ */}
+            <div className="space-y-3 leading-none">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 leading-none">Security Key</label>
+              <div className="relative leading-none">
+                <Lock className="absolute left-5 top-5 text-gray-300" size={20} />
+                <input 
+                  type="password" 
+                  required 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  className="w-full pl-14 pr-6 py-5 bg-gray-50 border-none rounded-3xl focus:ring-4 focus:ring-ma-gold/20 outline-none font-bold text-ma-blue shadow-inner leading-none" 
+                  placeholder="••••••••" 
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              className="w-full bg-ma-blue text-white py-6 rounded-[30px] font-black text-xl hover:bg-black transition-all shadow-2xl shadow-ma-blue/20 active:scale-95 transform tracking-widest uppercase italic mt-6 leading-none"
+            >
+              Access Portal
+            </button>
+          </form>
+
+          <button 
+            onClick={() => navigate('/')}
+            className="w-full mt-10 flex items-center justify-center gap-2 text-gray-400 hover:text-ma-gold transition-colors text-xs font-black uppercase tracking-widest leading-none italic"
+          >
+            <ChevronLeft size={16} /> Return to Home
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 };
