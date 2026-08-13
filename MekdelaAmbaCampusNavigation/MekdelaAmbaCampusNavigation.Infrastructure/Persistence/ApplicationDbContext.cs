@@ -17,7 +17,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Office> Offices { get; set; }
     public DbSet<MapNode> MapNodes { get; set; }
     public DbSet<MapEdge> MapEdges { get; set; }
-
+    public DbSet<User> Users { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

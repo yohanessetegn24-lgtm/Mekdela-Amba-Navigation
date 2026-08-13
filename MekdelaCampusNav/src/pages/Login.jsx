@@ -26,7 +26,7 @@ const Login = () => {
         navigate('/campuses'); 
       }
     } catch (err) {
-      setError('የመግቢያ ስህተት! እባክዎ ኢሜይልዎን ወይም ባክኤንድ መብራቱን ያረጋግጡ።');
+      setError('የመግቢያ ስህተት! እባክዎ ኢሜይልዎን ያረጋግጡ።');
     }
   };
 
