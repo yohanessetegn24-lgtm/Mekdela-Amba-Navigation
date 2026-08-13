@@ -10,7 +10,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { 
   LayoutDashboard, Map, Building2, Users, MessageSquare, 
-  LogOut, Plus, Search, Trash2, Edit, X, Briefcase, ChevronRight, Save, Route, MousePointer2, Activity, TrendingUp, Flag, Eye, UserCheck
+  LogOut, Plus, Search, Trash2, Edit, X, Briefcase, ChevronRight, Save, Route, MousePointer2, Activity, TrendingUp, Flag, Eye, UserCheck, DownloadCloud
 } from 'lucide-react';
 
 // --- 🚀 የካርታ ረዳት ክፍሎች ---
@@ -72,7 +72,7 @@ const AdminDashboard = () => {
   const [systemUsers, setSystemUsers] = useState([]); 
   const [roadNodes, setRoadNodes] = useState([]); 
   const [existingRoads, setExistingRoads] = useState([]); 
-  const [pois, setPois] = useState([]); // Added pois state if not already defined to avoid break
+  const [pois, setPois] = useState([]); 
   
   // Selection States
   const [selectedCampusId, setSelectedCampusId] = useState("");
@@ -84,7 +84,7 @@ const AdminDashboard = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({});
 
-  // 🚀 የፕሮፋይል ፊደል (Dynamic Initial)
+  // 🚀 የፕሮፋይል ፊደል
   const userEmail = localStorage.getItem('userName') || "Admin";
   const userInitial = userEmail.charAt(0).toUpperCase();
 
@@ -118,13 +118,16 @@ const AdminDashboard = () => {
     } else { setOffices([]); }
   }, [selectedBuildingId]);
 
-  // Load Roads
+  // 🚀 የመንገድ ዳታ ማምጣት
   const fetchExistingRoads = async () => {
     if (!selectedCampusId) return;
     try {
-      const res = await api.get(`/Roads/network/${selectedCampusId}`);
+      const res = await api.get(`/Roads/network/${parseInt(selectedCampusId)}`);
       setExistingRoads(res.data);
-    } catch (err) { setExistingRoads([]); }
+    } catch (err) { 
+      console.error("Error fetching roads:", err);
+      setExistingRoads([]); 
+    }
   };
 
   useEffect(() => {
@@ -163,7 +166,6 @@ const AdminDashboard = () => {
     e.preventDefault();
     const endpoint = modalType === 'user' ? 'Users' : modalType === 'campus' ? 'Campuses' : modalType === 'building' ? 'Buildings' : 'Offices';
     
-    // 🚀 አድሚን ከ 3 በላይ እንዳይሆን መከልከያ (ለአዲስ አድሚን ብቻ)
     if (modalType === 'user' && !isEditMode && systemUsers.length >= 3) {
       alert("ተሳስተዋል! ቢበዛ 3 አድሚኖችን ብቻ ነው መመዝገብ የሚቻለው።");
       return;
@@ -177,15 +179,53 @@ const AdminDashboard = () => {
     } catch (err) { alert("Error saving data"); }
   };
 
+  // 🚀 መንገዱን ሴቭ ማድረግ
   const handleSaveRoadNetwork = async () => {
     if (!selectedCampusId || roadNodes.length < 2) return alert("እባክዎ መጀመሪያ ካምፓስ መርጠው መንገድ ይሳሉ!");
-    const payload = { campusId: parseInt(selectedCampusId), nodes: roadNodes.map(n => ({ latitude: n.latitude, longitude: n.longitude })) };
+    
+    const payload = { 
+        campusId: parseInt(selectedCampusId), 
+        nodes: roadNodes.map(n => ({ latitude: n.latitude, longitude: n.longitude })) 
+    };
+
     try {
       await api.post('/Roads/save-network', payload);
-      alert("የመንገድ መረብ በስኬት ተቀምጧል! 🚀");
       setRoadNodes([]);
-      fetchExistingRoads();
-    } catch (err) { alert("መላክ አልተቻለም።"); }
+      alert("የመንገድ መረብ በስኬት ተቀምጧል! 🚀");
+      
+      setTimeout(() => {
+          fetchExistingRoads();
+      }, 500);
+
+    } catch (err) { 
+      alert("መላክ አልተቻለም። ባክኤንድዎን ይፈትሹ።"); 
+    }
+  };
+
+  // 🚀 መንገዶችን ከዳታቤዝ ማጥፊያ
+  const handleClearRoadNetwork = async () => {
+    if (!selectedCampusId) return alert("እባክዎ መጀመሪያ ካምፓስ ይምረጡ!");
+    
+    if (window.confirm("እርግጠኛ ነህ? በዚህ ካምፓስ ያሉ መንገዶች በሙሉ ከዳታቤዝ ይጠፋሉ!")) {
+      try {
+        await api.delete(`/Roads/clear-network/${selectedCampusId}`);
+        alert("መንገዶቹ በሙሉ ተሰርዘዋል! 🗑️");
+        fetchExistingRoads();
+      } catch (err) {
+        alert("ማጥፋት አልተቻለም።");
+      }
+    }
+  };
+
+  // 🚀 አዲስ፡ የቆየውን መንገድ ወደ መሳያው (Editor) የመጫኛ ፈንክሽን
+  const handleLoadToEditor = () => {
+    if (existingRoads.length === 0) return alert("መጀመሪያ ዳታቤዝ ውስጥ የተቀመጠ መንገድ መኖር አለበት!");
+    
+    if (window.confirm("ያለውን መንገድ ወደ መሳያው መጫን ትፈልጋለህ? ይህ ካቆምክበት ለመቀጠል ይረዳሃል።")) {
+      // አረንጓዴ የነበሩትን ነጥቦች ወደ ወርቃማ መሳያ ነጥቦች ቀይራቸው
+      setRoadNodes([...existingRoads]);
+      alert("መንገዱ ወደ መሳያው ተጭኗል! አሁን መቀጠል ትችላለህ። ✍️");
+    }
   };
 
   return (
@@ -318,7 +358,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* 6. 🚀 ADMIN MANAGEMENT (SYSTEM USERS) */}
+        {/* 6. 🚀 ADMIN MANAGEMENT */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-[40px] shadow-xl border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 italic font-bold text-ma-blue leading-none font-black uppercase">
             <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30 text-ma-blue font-black italic underline decoration-ma-gold decoration-4 underline-offset-8">
@@ -361,26 +401,86 @@ const AdminDashboard = () => {
 
         {/* 7. ROAD DESIGNER */}
         {activeTab === 'roads' && (
-          <div className="space-y-6 animate-in slide-in-from-bottom-6 duration-700 italic font-bold text-ma-blue font-black leading-none">
-            <div className="bg-white p-8 rounded-[35px] shadow-lg border border-gray-100 flex flex-wrap gap-6 justify-between items-center italic font-bold text-ma-blue font-black uppercase tracking-widest leading-none">
-               <div className="flex items-center gap-5 italic font-black leading-none font-black uppercase">
-                  <div className="bg-ma-blue text-white p-4 rounded-2xl shadow-lg animate-bounce text-white"><MousePointer2 size={24}/></div>
-                  <div><h3 className="font-black text-ma-blue text-xl italic tracking-tighter underline decoration-ma-gold decoration-4 underline-offset-8">Satellite Designer</h3></div>
+          <div className="flex gap-8 h-[600px] animate-in slide-in-from-bottom-6 duration-700 italic font-bold text-ma-blue font-black leading-none">
+            
+            {/* 🚀 LEFT SIDE: SAVED ROADS LIST (Fixed display logic) */}
+            <div className="w-96 bg-white rounded-[40px] shadow-xl border border-gray-100 flex flex-col overflow-hidden">
+               <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="text-ma-blue font-black uppercase italic text-sm underline decoration-ma-gold decoration-2">Saved Points ({existingRoads.length})</h3>
+                  <button onClick={fetchExistingRoads} className="p-2 text-ma-gold hover:rotate-180 transition-transform duration-500"><Activity size={18}/></button>
                </div>
-               <div className="flex items-center gap-4 italic font-bold text-ma-blue leading-none font-black uppercase">
-                  <select className="p-3 bg-white rounded-xl font-black text-ma-blue border-none focus:ring-2 focus:ring-ma-gold text-sm italic shadow-inner font-black uppercase" value={selectedCampusId} onChange={(e) => setSelectedCampusId(e.target.value)}><option value="">-- Choose Campus --</option>{campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-                  <button onClick={() => setRoadNodes([])} className="px-5 py-3 rounded-xl font-bold text-red-500 bg-red-50 hover:bg-red-100 transition text-sm italic font-black leading-none font-black uppercase">Reset</button>
-                  <button onClick={handleSaveRoadNetwork} className="px-8 py-3 rounded-xl font-black text-white bg-ma-blue shadow-2xl hover:bg-blue-900 transition text-sm text-white font-bold italic uppercase underline decoration-ma-gold decoration-4 shadow-ma-gold/20"><Save size={18}/> Save Network</button>
+               <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {existingRoads.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-gray-300 opacity-50">
+                       <Route size={48} className="mb-2"/>
+                       <p className="text-[10px] uppercase font-black">No Roads Found</p>
+                    </div>
+                  ) : (
+                    existingRoads.map((node, i) => (
+                      <div key={i} className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex justify-between items-center group hover:bg-ma-gold/10 transition-colors">
+                         <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-ma-blue text-ma-gold rounded-lg flex items-center justify-center text-[10px] font-black shadow-md">{i+1}</div>
+                            <div>
+                               <p className="text-[10px] font-black text-ma-blue uppercase">Point-ID: #{node.id}</p>
+                               <p className="text-[8px] font-mono text-blue-400">{node.latitude.toFixed(5)}, {node.longitude.toFixed(5)}</p>
+                            </div>
+                         </div>
+                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                         </div>
+                      </div>
+                    ))
+                  )}
+               </div>
+               <div className="p-6 border-t border-gray-50 bg-gray-50/30 space-y-3">
+                  <button onClick={handleSaveRoadNetwork} className="w-full bg-ma-blue text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-900 transition flex items-center justify-center gap-3 text-xs uppercase italic underline decoration-ma-gold decoration-2 underline-offset-4 shadow-ma-gold/20"><Save size={18}/> Push to Database</button>
+                  <button onClick={handleClearRoadNetwork} className="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-black hover:bg-red-100 transition flex items-center justify-center gap-3 text-[10px] uppercase border border-red-100 shadow-sm"><Trash2 size={16}/> Clear All Saved Roads</button>
                </div>
             </div>
-            <div className={`h-[550px] rounded-[55px] overflow-hidden shadow-2xl border-8 border-white relative transition-all ${!selectedCampusId && 'grayscale opacity-50'}`}>
-              <MapContainer center={[10.985464, 39.263236]} zoom={18} className="h-full w-full z-10 font-sans italic font-bold"><TileLayer url="https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" subdomains={['mt0','mt1','mt2','mt3']} />
-                {selectedCampusId && campuses.find(c => c.id == selectedCampusId) && <AutoFocusMap coords={[campuses.find(c => c.id == selectedCampusId).latitude, campuses.find(c => c.id == selectedCampusId).longitude]} />}
-                {existingRoads.map((node, idx) => (
-                  <React.Fragment key={idx}><CircleMarker center={[node.latitude, node.longitude]} radius={4} pathOptions={{ color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.8 }} />{node.edges && node.edges.map((edge, eIdx) => { const target = existingRoads.find(n => n.id === edge.endNodeId); return target && <Polyline key={eIdx} positions={[[node.latitude, node.longitude], [target.latitude, target.longitude]]} color="#22c55e" weight={3} opacity={0.6} />; })}</React.Fragment>
-                ))}
-                <SatelliteRoadBuilder nodes={roadNodes} onNodeAdd={(node) => setRoadNodes([...roadNodes, node])} />
-              </MapContainer>
+
+            {/* 🗺️ RIGHT SIDE: THE MAP */}
+            <div className="flex-1 flex flex-col gap-6">
+                <div className="bg-white p-6 rounded-[35px] shadow-lg border border-gray-100 flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-ma-blue text-white p-3 rounded-xl shadow-lg animate-bounce"><MousePointer2 size={20}/></div>
+                        <h3 className="font-black text-ma-blue text-lg italic uppercase tracking-tighter">Satellite Designer</h3>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        {/* 🚀 አዲስ፡ Load to Editor Button */}
+                        <button 
+                          onClick={handleLoadToEditor}
+                          disabled={!selectedCampusId || existingRoads.length === 0}
+                          className={`px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition text-[10px] uppercase shadow-sm ${(!selectedCampusId || existingRoads.length === 0) ? 'bg-gray-100 text-gray-400' : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'}`}
+                        >
+                          <DownloadCloud size={16}/> Load to Editor
+                        </button>
+                        <select className="p-3 bg-gray-50 rounded-xl font-black text-ma-blue border-none focus:ring-2 focus:ring-ma-gold text-xs shadow-inner" value={selectedCampusId} onChange={(e) => setSelectedCampusId(e.target.value)}><option value="">-- Choose Campus --</option>{campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+                        <button onClick={() => setRoadNodes([])} className="px-5 py-3 rounded-xl font-bold text-red-500 bg-red-50 hover:bg-red-100 transition text-[10px] uppercase">Reset Canvas</button>
+                    </div>
+                </div>
+
+                <div className={`flex-1 rounded-[45px] overflow-hidden shadow-2xl border-8 border-white relative transition-all ${!selectedCampusId && 'grayscale opacity-50'}`}>
+                    <MapContainer center={[10.985464, 39.263236]} zoom={18} className="h-full w-full z-10 font-sans italic font-bold">
+                        <TileLayer url="https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" subdomains={['mt0','mt1','mt2','mt3']} />
+                        {selectedCampusId && campuses.find(c => c.id == selectedCampusId) && <AutoFocusMap coords={[campuses.find(c => c.id == selectedCampusId).latitude, campuses.find(c => c.id == selectedCampusId).longitude]} />}
+                        
+                        {/* 🚀 የተመዘገቡ መንገዶችን በ "አረንጓዴ" አሳይ */}
+                        {existingRoads.map((node, idx) => (
+                        <React.Fragment key={idx}>
+                            <CircleMarker center={[node.latitude, node.longitude]} radius={5} pathOptions={{ color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.9 }} >
+                                <Popup><p className="font-black text-ma-blue text-[10px]">Saved Point: #{node.id}</p></Popup>
+                            </CircleMarker>
+                            {node.edges && node.edges.map((edge, eIdx) => { 
+                                const target = existingRoads.find(n => n.id === edge.endNodeId); 
+                                return target && <Polyline key={eIdx} positions={[[node.latitude, node.longitude], [target.latitude, target.longitude]]} color="#22c55e" weight={4} opacity={0.7} />; 
+                            })}
+                        </React.Fragment>
+                        ))}
+
+                        {/* 🚀 አሁን እየተሳሉ ያሉ መንገዶችን በ "ወርቅ" አሳይ */}
+                        <SatelliteRoadBuilder nodes={roadNodes} onNodeAdd={(node) => setRoadNodes([...roadNodes, node])} />
+                    </MapContainer>
+                </div>
             </div>
           </div>
         )}
