@@ -17,7 +17,7 @@ const Home = () => {
             <GraduationCap size={28} />
           </div>
           <span className="text-white font-black text-xl tracking-tighter hidden sm:block leading-none">
-            MAU <span className="text-ma-gold italic text-2xl">NAV</span>
+            MKAU <span className="text-ma-gold italic text-2xl">UNIVERSITY MAP</span>
           </span>
         </div>
         

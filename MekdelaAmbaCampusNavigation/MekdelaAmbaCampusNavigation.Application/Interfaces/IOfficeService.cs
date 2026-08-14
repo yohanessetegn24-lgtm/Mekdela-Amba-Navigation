@@ -8,4 +8,7 @@ public interface IOfficeService
     Task<Office> CreateOfficeAsync(Office office);
     Task UpdateOfficeAsync(Office office);
     Task DeleteOfficeAsync(int id);
+
+    Task<Office?> GetOfficeByIdAsync(int id); // 🚀 አዲስ
+    
 }

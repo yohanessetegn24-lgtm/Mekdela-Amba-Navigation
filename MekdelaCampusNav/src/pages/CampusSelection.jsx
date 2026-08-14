@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ChevronLeft } from 'lucide-react';
-import Navbar from '../components/Navbar';
+import { ArrowRight, Home } from 'lucide-react'; // Home icon ተጨምሯል
 
-// 🚀 ያንተን ፎቶዎች እዚህ ጋር እናስገባለን
+// 🚀 ያንተን ፎቶዎች እና ሎጎ እዚህ ጋር እናስገባለን
 import tuluImg from '../assets/mekdelaambauniversity.jpg'; 
 import mekaneImg from '../assets/homepage.jpg'; 
+import mauLogo from '../assets/mkaulogo.jpg'; // 🚀 Point 1: ሎጎ ተጨምሯል
 
 const CampusSelection = () => {
   const navigate = useNavigate();
@@ -15,33 +15,54 @@ const CampusSelection = () => {
       id: 1, 
       name: 'Tulu Awulia', 
       type: 'Main Campus', 
-      img: tuluImg // 👈 የቱሉ አውልያ ፎቶ
+      img: tuluImg 
     },
     { 
       id: 2, 
       name: 'Mekane Selam', 
       type: 'Secondary Campus', 
-      img: mekaneImg // 👈 ለጊዜው ሆም ፔጅ ላይ ያለው ፎቶ
+      img: mekaneImg 
     }
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans italic font-bold">
-      {/* 1. ናቭባር ተጨምሯል */}
-      <Navbar />
-
-      <div className="pt-32 px-6 max-w-6xl mx-auto pb-20">
-        
-        {/* 2. ወደ ኋላ መመለሻ በተን (Back Button) */}
-        <button 
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-ma-blue mb-8 hover:text-ma-gold transition-all group"
-        >
-          <div className="bg-white p-2 rounded-full shadow-md group-hover:bg-ma-gold group-hover:text-white transition-all">
-            <ChevronLeft size={20} />
+    <div className="min-h-screen bg-[#F8FAFC] font-sans italic font-bold leading-none">
+      
+      {/* 🚀 የተስተካከለ ናቭባር (Navbar) */}
+      <nav className="fixed top-0 left-0 w-full bg-white/90 backdrop-blur-md z-50 px-8 py-4 flex justify-between items-center shadow-sm border-b border-gray-100">
+        <div className="flex items-center gap-8">
+          {/* Point 1: ሎጎ እና የዩኒቨርሲቲው ስም */}
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+            <img src={mauLogo} alt="Logo" className="w-12 h-12 rounded-xl object-cover shadow-lg border-2 border-white" />
+            <div className="leading-none">
+              <h1 className="text-ma-blue font-black text-xl tracking-tighter uppercase italic">Mekdela Amba</h1>
+              <p className="text-ma-gold text-[9px] font-black tracking-[3px] uppercase">University</p>
+            </div>
           </div>
-          <span className="uppercase tracking-widest text-xs">Back to Home</span>
+
+          {/* Point 2: የ "Home" ሊንክ ወደ ግራ ተወስዷል */}
+          <button 
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 text-ma-blue hover:text-ma-gold transition-all border-l-2 border-gray-100 pl-8 h-10"
+          >
+            <Home size={20} className="text-ma-gold" />
+            <span className="text-sm font-black uppercase tracking-widest">Home</span>
+          </button>
+        </div>
+
+        {/* Point 3: 'Campuses' የሚለው ሊንክ እዚህ ጋር ተወግዷል */}
+
+        <button 
+          onClick={() => navigate('/login')}
+          className="bg-ma-blue text-white px-10 py-3 rounded-xl font-black text-sm hover:bg-blue-900 transition-all shadow-xl italic"
+        >
+          Login
         </button>
+      </nav>
+
+      <div className="pt-40 px-6 max-w-6xl mx-auto pb-20">
+        
+        {/* Point 4: 'Back to Home' የሚለው በተን ከዚህ ጋር ተወግዷል */}
 
         {/* ርዕስ */}
         <div className="text-center mb-16 animate-in fade-in slide-in-from-top-4 duration-1000">
@@ -52,12 +73,12 @@ const CampusSelection = () => {
           <p className="text-gray-400 mt-6 text-lg font-medium italic">Select a location to start your smart navigation journey</p>
         </div>
 
-        {/* የካምፓስ ካርዶች */}
+        {/* የካምፓስ ካርዶች (ምንም አልተቀየሩም) */}
         <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto leading-none">
           {campuses.map((c, index) => (
             <div 
               key={c.id} 
-              className={`group bg-white rounded-[50px] shadow-2xl overflow-hidden border border-gray-100 hover:border-ma-gold transition-all duration-500 transform hover:-translate-y-4 animate-in fade-in zoom-in duration-700 delay-${index * 200}`}
+              className={`group bg-white rounded-[50px] shadow-2xl overflow-hidden border border-gray-100 hover:border-ma-gold transition-all duration-500 transform hover:-translate-y-4 animate-in fade-in zoom-in duration-700`}
             >
               <div className="h-72 relative overflow-hidden">
                 <img 
@@ -65,7 +86,6 @@ const CampusSelection = () => {
                   alt={c.name} 
                   className="w-full h-full object-cover transition duration-1000 group-hover:scale-110" 
                 />
-                {/* የሚያምር ሼድ (Gradient) */}
                 <div className="absolute inset-0 bg-gradient-to-t from-ma-blue/90 via-ma-blue/20 to-transparent"></div>
                 
                 <div className="absolute bottom-8 left-10 text-white">

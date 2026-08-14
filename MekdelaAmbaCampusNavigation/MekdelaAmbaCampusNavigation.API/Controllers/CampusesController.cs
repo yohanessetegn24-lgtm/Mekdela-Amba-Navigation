@@ -37,26 +37,25 @@ public class CampusesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Campus>> CreateCampus(CampusCreateDto campusDto)
     {
+        // 🚀 AutoMapper ፊልዶቹን (Description, ImageUrl) በራሱ Map ያደርጋቸዋል
         var campus = _mapper.Map<Campus>(campusDto);
         var created = await _campusService.CreateCampusAsync(campus);
         return Ok(created);
     }
 
-    // PUT: api/Campuses/1 (ማስተካከያ)
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateCampus(int id, CampusCreateDto campusDto)
     {
         var existingCampus = await _campusService.GetCampusByIdAsync(id);
         if (existingCampus == null) return NotFound();
 
-        // በDTO የመጣውን አዲስ መረጃ በነባሩ Entity ላይ ይጭነዋል
+        // 🚀 አዲሶቹን መረጃዎች (Description, ImageUrl ጨምሮ) በነባሩ ላይ ይጭናል
         _mapper.Map(campusDto, existingCampus);
 
         await _campusService.UpdateCampusAsync(existingCampus);
-        return NoContent(); // 204 ስኬት
+        return NoContent();
     }
 
-    // DELETE: api/Campuses/1 (ማጥፊያ)
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCampus(int id)
     {

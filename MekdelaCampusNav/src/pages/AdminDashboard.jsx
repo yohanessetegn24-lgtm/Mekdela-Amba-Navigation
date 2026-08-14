@@ -10,7 +10,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { 
   LayoutDashboard, Map, Building2, Users, MessageSquare, 
-  LogOut, Plus, Search, Trash2, Edit, X, Briefcase, ChevronRight, Save, Route, MousePointer2, Activity, TrendingUp, Flag, Eye, UserCheck, DownloadCloud
+  LogOut, Plus, Search, Trash2, Edit, X, Briefcase, ChevronRight, Save, Route, MousePointer2, Activity, TrendingUp, Flag, Eye, UserCheck, DownloadCloud, Image as ImageIcon, Upload
 } from 'lucide-react';
 
 // --- 🚀 የካርታ ረዳት ክፍሎች ---
@@ -217,14 +217,29 @@ const AdminDashboard = () => {
     }
   };
 
-  // 🚀 አዲስ፡ የቆየውን መንገድ ወደ መሳያው (Editor) የመጫኛ ፈንክሽን
+  // 🚀 የቆየውን መንገድ ወደ መሳያው የመጫኛ ፈንክሽን
   const handleLoadToEditor = () => {
     if (existingRoads.length === 0) return alert("መጀመሪያ ዳታቤዝ ውስጥ የተቀመጠ መንገድ መኖር አለበት!");
     
     if (window.confirm("ያለውን መንገድ ወደ መሳያው መጫን ትፈልጋለህ? ይህ ካቆምክበት ለመቀጠል ይረዳሃል።")) {
-      // አረንጓዴ የነበሩትን ነጥቦች ወደ ወርቃማ መሳያ ነጥቦች ቀይራቸው
       setRoadNodes([...existingRoads]);
       alert("መንገዱ ወደ መሳያው ተጭኗል! አሁን መቀጠል ትችላለህ። ✍️");
+    }
+  };
+
+  // 🚀 አዲስ፡ ፎቶን ወደ Base64 የመቀየሪያ ፈንክሽን (ለቀጥታ Upload)
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2000000) { // 2MB Limit
+        alert("ፎቶው በጣም ትልቅ ነው! እባክዎ ከ 2MB በታች የሆነ ፎቶ ይምረጡ።");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, imageUrl: reader.result });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -301,17 +316,17 @@ const AdminDashboard = () => {
             </div>
             <table className="w-full text-left">
               <thead className="bg-gray-50 text-gray-400 text-[10px] uppercase font-black tracking-widest text-ma-blue italic">
-                <tr><th className="p-8 text-ma-blue">ID</th><th className="p-8 text-ma-blue">Campus Name</th><th className="p-8 text-center text-ma-blue">GPS Location</th><th className="p-8 text-center text-ma-blue">Actions</th></tr>
+                <tr><th className="p-8">ID</th><th className="p-8">Campus Name</th><th className="p-8 text-center">Location</th><th className="p-8 text-center">Actions</th></tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 text-ma-blue font-bold italic leading-none">
+              <tbody className="divide-y divide-gray-50">
                 {campuses.map(c => (
-                  <tr key={c.id} className="hover:bg-blue-50/20 transition group leading-none">
+                  <tr key={c.id} className="hover:bg-blue-50/20 transition group">
                     <td className="p-8 text-ma-gold">#{c.id}</td>
-                    <td className="p-8 italic leading-none italic">{c.name}</td>
-                    <td className="p-8 font-mono text-xs text-blue-600 text-center uppercase">{c.latitude.toFixed(4)}, {c.longitude.toFixed(4)}</td>
-                    <td className="p-8 text-center flex justify-center gap-4 italic font-bold">
-                      <button onClick={() => handleEditClick('campus', c)} className="p-3 text-blue-600 bg-blue-50 rounded-2xl hover:bg-blue-600 transition leading-none italic font-black"><Edit size={18}/></button>
-                      <button onClick={() => handleDelete('campus', c.id)} className="p-3 text-red-500 bg-red-50 rounded-2xl hover:bg-red-500 transition leading-none italic font-black"><Trash2 size={18}/></button>
+                    <td className="p-8">{c.name}</td>
+                    <td className="p-8 text-center font-mono text-xs">{c.latitude.toFixed(4)}, {c.longitude.toFixed(4)}</td>
+                    <td className="p-8 text-center flex justify-center gap-4">
+                      <button onClick={() => handleEditClick('campus', c)} className="p-3 text-blue-600 bg-blue-50 rounded-2xl hover:bg-blue-600 hover:text-white transition"><Edit size={18}/></button>
+                      <button onClick={() => handleDelete('campus', c.id)} className="p-3 text-red-500 bg-red-50 rounded-2xl hover:bg-red-500 hover:text-white transition"><Trash2 size={18}/></button>
                     </td>
                   </tr>
                 ))}
@@ -323,17 +338,17 @@ const AdminDashboard = () => {
         {/* 3. BUILDINGS CRUD */}
         {activeTab === 'buildings' && (
           <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700 italic font-bold leading-none">
-            <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 text-ma-blue font-black uppercase"><label className="text-[10px] font-black text-ma-gold uppercase mb-4 block tracking-widest leading-none italic font-black">Step 1: Choose Campus</label><select className="w-full p-4 bg-gray-50 rounded-2xl font-black border-none focus:ring-4 focus:ring-ma-gold/20 italic text-ma-blue shadow-inner font-black uppercase tracking-widest" value={selectedCampusId} onChange={(e) => setSelectedCampusId(e.target.value)}><option value="">-- Choose Campus --</option>{campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+            <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 text-ma-blue font-black uppercase"><label className="text-[10px] font-black text-ma-gold uppercase mb-4 block tracking-widest leading-none">Step 1: Choose Campus</label><select className="w-full p-4 bg-gray-50 rounded-2xl font-black border-none focus:ring-4 focus:ring-ma-gold/20 text-ma-blue shadow-inner" value={selectedCampusId} onChange={(e) => setSelectedCampusId(e.target.value)}><option value="">-- Choose Campus --</option>{campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
             {selectedCampusId && (
-              <div className="bg-white rounded-[45px] shadow-xl border border-gray-100 overflow-hidden text-ma-blue italic leading-none font-bold">
+              <div className="bg-white rounded-[45px] shadow-xl border border-gray-100 overflow-hidden text-ma-blue italic font-bold">
                 <div className="p-10 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
-                  <h3 className="text-xl font-black uppercase italic leading-none underline decoration-ma-gold decoration-4 underline-offset-8">Buildings List</h3>
-                  <button onClick={() => openModal('building')} className="bg-ma-blue text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-3 hover:bg-blue-900 transition shadow-lg leading-none uppercase text-white italic font-black"><Plus size={22}/> New Building</button>
+                  <h3 className="text-xl font-black uppercase underline decoration-ma-gold decoration-4 underline-offset-8">Buildings List</h3>
+                  <button onClick={() => openModal('building')} className="bg-ma-blue text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-3 hover:bg-blue-900 transition shadow-lg leading-none uppercase"><Plus size={22}/> New Building</button>
                 </div>
-                <table className="w-full text-left italic font-bold">
-                  <thead className="bg-gray-50 text-gray-400 text-[10px] uppercase font-black text-ma-blue italic"><tr><th className="p-8">ID</th><th className="p-8">Building Name</th><th className="p-8 text-center text-ma-blue font-bold italic">Actions</th></tr></thead>
-                  <tbody className="divide-y divide-gray-50 italic">{buildings.filter(b => b.campusId == selectedCampusId).map(b => (
-                    <tr key={b.id} className="hover:bg-blue-50/20 group italic font-black text-ma-blue leading-none"><td className="p-8 text-ma-gold italic leading-none font-black uppercase">#{b.id}</td><td className="p-8 italic leading-none font-black uppercase">{b.name}</td><td className="p-8 text-center flex justify-center gap-4 italic font-bold text-ma-blue leading-none"><button onClick={() => handleEditClick('building', b)} className="p-3 text-blue-600 bg-blue-50 rounded-2xl transition leading-none italic font-black"><Edit size={18}/></button><button onClick={() => handleDelete('building', b.id)} className="p-3 text-red-500 bg-red-50 rounded-2xl transition leading-none italic font-black"><Trash2 size={18}/></button></td></tr>
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 text-gray-400 text-[10px] uppercase font-black text-ma-blue italic"><tr><th className="p-8">ID</th><th className="p-8">Building Name</th><th className="p-8 text-center">Actions</th></tr></thead>
+                  <tbody className="divide-y divide-gray-50">{buildings.filter(b => b.campusId == selectedCampusId).map(b => (
+                    <tr key={b.id} className="hover:bg-blue-50/20 group"><td className="p-8 text-ma-gold">#{b.id}</td><td className="p-8">{b.name}</td><td className="p-8 text-center flex justify-center gap-4"><button onClick={() => handleEditClick('building', b)} className="p-3 text-blue-600 bg-blue-50 rounded-2xl transition"><Edit size={18}/></button><button onClick={() => handleDelete('building', b.id)} className="p-3 text-red-500 bg-red-50 rounded-2xl transition"><Trash2 size={18}/></button></td></tr>
                   ))}</tbody>
                 </table>
               </div>
@@ -343,17 +358,10 @@ const AdminDashboard = () => {
 
         {/* 4. OFFICE HIERARCHY */}
         {activeTab === 'offices' && (
-          <div className="space-y-8 animate-in fade-in duration-500 font-bold text-ma-blue italic leading-none italic font-black">
-            <div className="grid grid-cols-2 gap-8 italic font-bold leading-none font-black uppercase">
-              <div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 font-bold italic leading-none italic font-black leading-none uppercase"><label className="text-[10px] font-black text-ma-gold uppercase mb-4 block italic font-bold text-ma-blue font-black uppercase leading-none">Step 1: Select Campus</label><select className="w-full p-4 bg-gray-50 rounded-2xl font-black border-none text-ma-blue font-bold shadow-inner italic font-bold" value={selectedCampusId} onChange={(e) => { setSelectedCampusId(e.target.value); setSelectedBuildingId(""); }}><option value="">-- Choose Campus --</option>{campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-              <div className={`bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 ${!selectedCampusId && 'opacity-30'} font-bold italic text-ma-blue leading-none italic font-black uppercase leading-none`}><label className="text-[10px] font-black text-ma-gold uppercase mb-4 block italic font-bold text-ma-blue font-bold italic leading-none">Step 2: Select Building</label><select disabled={!selectedCampusId} className="w-full p-4 bg-gray-50 rounded-2xl font-black border-none text-ma-blue shadow-inner italic font-bold" value={selectedBuildingId} onChange={(e) => setSelectedBuildingId(e.target.value)}><option value="">-- Choose Building --</option>{buildings.filter(b => b.campusId == selectedCampusId).map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
-            </div>
+          <div className="space-y-8 animate-in fade-in duration-500 font-bold text-ma-blue italic leading-none">
+            <div className="grid grid-cols-2 gap-8 uppercase"><div className="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100"><label className="text-[10px] font-black text-ma-gold uppercase mb-4 block">Step 1: Select Campus</label><select className="w-full p-4 bg-gray-50 rounded-2xl font-black border-none text-ma-blue shadow-inner" value={selectedCampusId} onChange={(e) => { setSelectedCampusId(e.target.value); setSelectedBuildingId(""); }}><option value="">-- Choose Campus --</option>{campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div><div className={`bg-white p-8 rounded-[35px] shadow-sm border border-gray-100 ${!selectedCampusId && 'opacity-30'}`}><label className="text-[10px] font-black text-ma-gold uppercase mb-4 block">Step 2: Select Building</label><select disabled={!selectedCampusId} className="w-full p-4 bg-gray-50 rounded-2xl font-black border-none text-ma-blue shadow-inner" value={selectedBuildingId} onChange={(e) => setSelectedBuildingId(e.target.value)}><option value="">-- Choose Building --</option>{buildings.filter(b => b.campusId == selectedCampusId).map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div></div>
             {selectedBuildingId && (
-              <div className="bg-white rounded-[45px] shadow-xl border border-gray-100 overflow-hidden font-bold italic text-ma-blue leading-none italic font-black uppercase leading-none font-black italic"><div className="p-10 border-b border-gray-50 flex justify-between items-center bg-gray-50/30 font-black italic uppercase leading-none underline decoration-ma-gold decoration-4 underline-offset-8"><h3>Offices Management</h3><button onClick={() => openModal('office')} className="bg-ma-blue text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-3 hover:bg-blue-900 shadow-lg leading-none uppercase text-white font-bold italic font-black leading-none"><Plus size={24}/> Add Office</button></div>
-              <table className="w-full text-left font-bold italic leading-none font-black italic"><thead className="bg-gray-50 text-gray-400 text-[10px] uppercase font-black italic text-ma-blue leading-none italic italic"><tr><th className="p-8 text-ma-blue">ID</th><th className="p-8 text-ma-blue">Office Details</th><th className="p-8 text-center text-ma-blue italic font-bold leading-none italic">Actions</th></tr></thead>
-              <tbody className="divide-y divide-gray-50 text-ma-blue font-bold italic">{offices.map(o => (
-                <tr key={o.id} className="hover:bg-blue-50/10 transition group italic font-black text-ma-blue leading-none"><td className="p-8 text-ma-gold font-black italic leading-none italic font-black leading-none">#{o.id}</td><td className="p-8 font-black italic leading-none italic text-ma-blue leading-none">{o.name} - Room {o.roomNumber}</td><td className="p-8 text-center flex justify-center gap-4 italic font-bold text-ma-blue leading-none italic font-black"><button onClick={() => handleEditClick('office', o)} className="p-3 text-blue-600 bg-blue-50 rounded-2xl transition leading-none italic font-black leading-none italic"><Edit size={18}/></button><button onClick={() => handleDelete('office', o.id)} className="p-3 text-red-500 bg-red-50 rounded-2xl transition leading-none italic font-black leading-none italic"><Trash2 size={20}/></button></td></tr>
-              ))}</tbody></table></div>
+              <div className="bg-white rounded-[45px] shadow-xl border border-gray-100 overflow-hidden font-bold italic text-ma-blue leading-none"><div className="p-10 border-b border-gray-50 flex justify-between items-center bg-gray-50/30 font-black italic uppercase underline decoration-ma-gold decoration-4 underline-offset-8"><h3>Offices Management</h3><button onClick={() => openModal('office')} className="bg-ma-blue text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-3 hover:bg-blue-900 shadow-lg leading-none uppercase"><Plus size={24}/> Add Office</button></div><table className="w-full text-left font-bold italic leading-none"><thead className="bg-gray-50 text-gray-400 text-[10px] uppercase font-black text-ma-blue italic"><tr><th className="p-8">ID</th><th className="p-8">Office Details</th><th className="p-8 text-center">Actions</th></tr></thead><tbody className="divide-y divide-gray-50 text-ma-blue font-bold italic">{offices.map(o => (<tr key={o.id} className="hover:bg-blue-50/10 transition group"><td className="p-8 text-ma-gold">#{o.id}</td><td className="p-8">{o.name} - Room {o.roomNumber}</td><td className="p-8 text-center flex justify-center gap-4"><button onClick={() => handleEditClick('office', o)} className="p-3 text-blue-600 bg-blue-50 rounded-2xl transition"><Edit size={18}/></button><button onClick={() => handleDelete('office', o.id)} className="p-3 text-red-500 bg-red-50 rounded-2xl transition"><Trash2 size={20}/></button></td></tr>))}</tbody></table></div>
             )}
           </div>
         )}
@@ -361,153 +369,102 @@ const AdminDashboard = () => {
         {/* 6. 🚀 ADMIN MANAGEMENT */}
         {activeTab === 'users' && (
           <div className="bg-white rounded-[40px] shadow-xl border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-6 italic font-bold text-ma-blue leading-none font-black uppercase">
-            <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30 text-ma-blue font-black italic underline decoration-ma-gold decoration-4 underline-offset-8">
-               <h3>Authorized Administrators ({systemUsers.length}/3)</h3>
-               <button 
-                onClick={() => openModal('user')} 
-                disabled={systemUsers.length >= 3}
-                className={`px-8 py-3 rounded-xl font-bold transition shadow-lg italic leading-none text-white font-black uppercase flex items-center gap-2 ${systemUsers.length >= 3 ? 'bg-gray-400 cursor-not-allowed' : 'bg-ma-blue hover:bg-blue-900'}`}
-               >
-                 <Plus size={20}/> Add Admin
-               </button>
-            </div>
-            <table className="w-full text-left italic font-bold leading-none font-black uppercase">
-              <thead className="bg-gray-50 text-gray-400 text-[10px] uppercase font-black text-ma-blue italic leading-none">
-                <tr>
-                  <th className="p-8">ID</th>
-                  <th className="p-8">Initial</th>
-                  <th className="p-8">Full Name</th>
-                  <th className="p-8">Email Address</th>
-                  <th className="p-8 text-center">Manage</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 text-ma-blue font-bold italic font-black uppercase tracking-widest">
-                {systemUsers.map(u => (
-                  <tr key={u.id} className="hover:bg-blue-50/10 group leading-none italic font-bold font-black">
-                    <td className="p-8 text-ma-gold italic leading-none font-black uppercase leading-none">#{u.id}</td>
-                    <td className="p-8 font-black italic leading-none italic font-bold leading-none italic uppercase"><div className="w-12 h-12 bg-ma-blue rounded-2xl flex items-center justify-center text-ma-gold font-black shadow-xl italic font-black uppercase">{u.fullName?.charAt(0) || "U"}</div></td>
-                    <td className="p-8 font-black italic leading-none italic font-bold uppercase leading-none">{u.fullName}</td>
-                    <td className="p-8 lowercase font-medium text-blue-600">{u.email}</td>
-                    <td className="p-8 text-center flex justify-center gap-4 italic font-bold leading-none font-black leading-none uppercase">
-                      <button onClick={() => handleEditClick('user', u)} className="p-3 text-blue-600 bg-blue-50 rounded-2xl hover:bg-blue-600 hover:text-white transition shadow-sm"><Edit size={20}/></button>
-                      <button onClick={() => handleDelete('user', u.id)} className="p-3 text-red-500 bg-red-50 hover:bg-red-500 hover:text-white transition shadow-sm"><Trash2 size={20}/></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30 text-ma-blue font-black italic underline decoration-ma-gold decoration-4 underline-offset-8"><h3>Authorized Administrators ({systemUsers.length}/3)</h3><button onClick={() => openModal('user')} disabled={systemUsers.length >= 3} className={`px-8 py-3 rounded-xl font-bold transition shadow-lg italic leading-none text-white font-black uppercase flex items-center gap-2 ${systemUsers.length >= 3 ? 'bg-gray-400 cursor-not-allowed' : 'bg-ma-blue hover:bg-blue-900'}`}><Plus size={20}/> Add Admin</button></div>
+            <table className="w-full text-left italic font-bold leading-none font-black uppercase"><thead className="bg-gray-50 text-gray-400 text-[10px] uppercase font-black text-ma-blue italic leading-none"><tr><th className="p-8">ID</th><th className="p-8">Initial</th><th className="p-8">Full Name</th><th className="p-8">Email Address</th><th className="p-8 text-center">Manage</th></tr></thead><tbody className="divide-y divide-gray-50 text-ma-blue font-bold italic font-black uppercase tracking-widest">{systemUsers.map(u => (<tr key={u.id} className="hover:bg-blue-50/10 group leading-none italic font-bold font-black"><td className="p-8 text-ma-gold italic leading-none font-black uppercase leading-none">#{u.id}</td><td className="p-8 font-black italic leading-none italic font-bold leading-none italic uppercase"><div className="w-12 h-12 bg-ma-blue rounded-2xl flex items-center justify-center text-ma-gold font-black shadow-xl italic font-black uppercase">{u.fullName?.charAt(0) || "U"}</div></td><td className="p-8 font-black italic leading-none italic font-bold uppercase leading-none">{u.fullName}</td><td className="p-8 lowercase font-medium text-blue-600">{u.email}</td><td className="p-8 text-center flex justify-center gap-4 italic font-bold leading-none font-black leading-none uppercase"><button onClick={() => handleEditClick('user', u)} className="p-3 text-blue-600 bg-blue-50 rounded-2xl hover:bg-blue-600 hover:text-white transition shadow-sm"><Edit size={20}/></button><button onClick={() => handleDelete('user', u.id)} className="p-3 text-red-500 bg-red-50 hover:bg-red-500 hover:text-white transition shadow-sm"><Trash2 size={20}/></button></td></tr>))}</tbody></table>
           </div>
         )}
 
         {/* 7. ROAD DESIGNER */}
         {activeTab === 'roads' && (
           <div className="flex gap-8 h-[600px] animate-in slide-in-from-bottom-6 duration-700 italic font-bold text-ma-blue font-black leading-none">
-            
-            {/* 🚀 LEFT SIDE: SAVED ROADS LIST (Fixed display logic) */}
-            <div className="w-96 bg-white rounded-[40px] shadow-xl border border-gray-100 flex flex-col overflow-hidden">
-               <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
-                  <h3 className="text-ma-blue font-black uppercase italic text-sm underline decoration-ma-gold decoration-2">Saved Points ({existingRoads.length})</h3>
-                  <button onClick={fetchExistingRoads} className="p-2 text-ma-gold hover:rotate-180 transition-transform duration-500"><Activity size={18}/></button>
-               </div>
-               <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                  {existingRoads.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-gray-300 opacity-50">
-                       <Route size={48} className="mb-2"/>
-                       <p className="text-[10px] uppercase font-black">No Roads Found</p>
-                    </div>
-                  ) : (
-                    existingRoads.map((node, i) => (
-                      <div key={i} className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex justify-between items-center group hover:bg-ma-gold/10 transition-colors">
-                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-ma-blue text-ma-gold rounded-lg flex items-center justify-center text-[10px] font-black shadow-md">{i+1}</div>
-                            <div>
-                               <p className="text-[10px] font-black text-ma-blue uppercase">Point-ID: #{node.id}</p>
-                               <p className="text-[8px] font-mono text-blue-400">{node.latitude.toFixed(5)}, {node.longitude.toFixed(5)}</p>
-                            </div>
-                         </div>
-                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                         </div>
-                      </div>
-                    ))
-                  )}
-               </div>
-               <div className="p-6 border-t border-gray-50 bg-gray-50/30 space-y-3">
-                  <button onClick={handleSaveRoadNetwork} className="w-full bg-ma-blue text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-900 transition flex items-center justify-center gap-3 text-xs uppercase italic underline decoration-ma-gold decoration-2 underline-offset-4 shadow-ma-gold/20"><Save size={18}/> Push to Database</button>
-                  <button onClick={handleClearRoadNetwork} className="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-black hover:bg-red-100 transition flex items-center justify-center gap-3 text-[10px] uppercase border border-red-100 shadow-sm"><Trash2 size={16}/> Clear All Saved Roads</button>
-               </div>
-            </div>
-
-            {/* 🗺️ RIGHT SIDE: THE MAP */}
-            <div className="flex-1 flex flex-col gap-6">
-                <div className="bg-white p-6 rounded-[35px] shadow-lg border border-gray-100 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-ma-blue text-white p-3 rounded-xl shadow-lg animate-bounce"><MousePointer2 size={20}/></div>
-                        <h3 className="font-black text-ma-blue text-lg italic uppercase tracking-tighter">Satellite Designer</h3>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        {/* 🚀 አዲስ፡ Load to Editor Button */}
-                        <button 
-                          onClick={handleLoadToEditor}
-                          disabled={!selectedCampusId || existingRoads.length === 0}
-                          className={`px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition text-[10px] uppercase shadow-sm ${(!selectedCampusId || existingRoads.length === 0) ? 'bg-gray-100 text-gray-400' : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'}`}
-                        >
-                          <DownloadCloud size={16}/> Load to Editor
-                        </button>
-                        <select className="p-3 bg-gray-50 rounded-xl font-black text-ma-blue border-none focus:ring-2 focus:ring-ma-gold text-xs shadow-inner" value={selectedCampusId} onChange={(e) => setSelectedCampusId(e.target.value)}><option value="">-- Choose Campus --</option>{campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-                        <button onClick={() => setRoadNodes([])} className="px-5 py-3 rounded-xl font-bold text-red-500 bg-red-50 hover:bg-red-100 transition text-[10px] uppercase">Reset Canvas</button>
-                    </div>
-                </div>
-
-                <div className={`flex-1 rounded-[45px] overflow-hidden shadow-2xl border-8 border-white relative transition-all ${!selectedCampusId && 'grayscale opacity-50'}`}>
-                    <MapContainer center={[10.985464, 39.263236]} zoom={18} className="h-full w-full z-10 font-sans italic font-bold">
-                        <TileLayer url="https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" subdomains={['mt0','mt1','mt2','mt3']} />
-                        {selectedCampusId && campuses.find(c => c.id == selectedCampusId) && <AutoFocusMap coords={[campuses.find(c => c.id == selectedCampusId).latitude, campuses.find(c => c.id == selectedCampusId).longitude]} />}
-                        
-                        {/* 🚀 የተመዘገቡ መንገዶችን በ "አረንጓዴ" አሳይ */}
-                        {existingRoads.map((node, idx) => (
-                        <React.Fragment key={idx}>
-                            <CircleMarker center={[node.latitude, node.longitude]} radius={5} pathOptions={{ color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.9 }} >
-                                <Popup><p className="font-black text-ma-blue text-[10px]">Saved Point: #{node.id}</p></Popup>
-                            </CircleMarker>
-                            {node.edges && node.edges.map((edge, eIdx) => { 
-                                const target = existingRoads.find(n => n.id === edge.endNodeId); 
-                                return target && <Polyline key={eIdx} positions={[[node.latitude, node.longitude], [target.latitude, target.longitude]]} color="#22c55e" weight={4} opacity={0.7} />; 
-                            })}
-                        </React.Fragment>
-                        ))}
-
-                        {/* 🚀 አሁን እየተሳሉ ያሉ መንገዶችን በ "ወርቅ" አሳይ */}
-                        <SatelliteRoadBuilder nodes={roadNodes} onNodeAdd={(node) => setRoadNodes([...roadNodes, node])} />
-                    </MapContainer>
-                </div>
-            </div>
+            <div className="w-96 bg-white rounded-[40px] shadow-xl border border-gray-100 flex flex-col overflow-hidden"><div className="p-6 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between"><h3 className="text-ma-blue font-black uppercase italic text-sm underline decoration-ma-gold decoration-2">Saved Points ({existingRoads.length})</h3><button onClick={fetchExistingRoads} className="p-2 text-ma-gold hover:rotate-180 transition-transform duration-500"><Activity size={18}/></button></div><div className="flex-1 overflow-y-auto p-4 space-y-3">{existingRoads.length === 0 ? (<div className="h-full flex flex-col items-center justify-center text-gray-300 opacity-50"><Route size={48} className="mb-2"/><p className="text-[10px] uppercase font-black">No Roads Found</p></div>) : (existingRoads.map((node, i) => (<div key={i} className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex justify-between items-center group hover:bg-ma-gold/10 transition-colors"><div className="flex items-center gap-3"><div className="w-8 h-8 bg-ma-blue text-ma-gold rounded-lg flex items-center justify-center text-[10px] font-black shadow-md">{i+1}</div><div><p className="text-[10px] font-black text-ma-blue uppercase">Point-ID: #{node.id}</p><p className="text-[8px] font-mono text-blue-400">{node.latitude.toFixed(5)}, {node.longitude.toFixed(5)}</p></div></div></div>)))}</div><div className="p-6 border-t border-gray-50 bg-gray-50/30 space-y-3"><button onClick={handleSaveRoadNetwork} className="w-full bg-ma-blue text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-900 transition flex items-center justify-center gap-3 text-xs uppercase italic underline decoration-ma-gold decoration-2 underline-offset-4 shadow-ma-gold/20"><Save size={18}/> Push to Database</button><button onClick={handleClearRoadNetwork} className="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-black hover:bg-red-100 transition flex items-center justify-center gap-3 text-[10px] uppercase border border-red-100 shadow-sm"><Trash2 size={16}/> Clear All Saved Roads</button></div></div>
+            <div className="flex-1 flex flex-col gap-6"><div className="bg-white p-6 rounded-[35px] shadow-lg border border-gray-100 flex justify-between items-center"><div className="flex items-center gap-4"><div className="bg-ma-blue text-white p-3 rounded-xl shadow-lg animate-bounce"><MousePointer2 size={20}/></div><h3 className="font-black text-ma-blue text-lg italic uppercase tracking-tighter">Satellite Designer</h3></div><div className="flex items-center gap-4"><button onClick={handleLoadToEditor} disabled={!selectedCampusId || existingRoads.length === 0} className={`px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition text-[10px] uppercase shadow-sm ${(!selectedCampusId || existingRoads.length === 0) ? 'bg-gray-100 text-gray-400' : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'}`}><DownloadCloud size={16}/> Load to Editor</button><select className="p-3 bg-gray-50 rounded-xl font-black text-ma-blue border-none focus:ring-2 focus:ring-ma-gold text-xs shadow-inner" value={selectedCampusId} onChange={(e) => setSelectedCampusId(e.target.value)}><option value="">-- Choose Campus --</option>{campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select><button onClick={() => setRoadNodes([])} className="px-5 py-3 rounded-xl font-bold text-red-500 bg-red-50 hover:bg-red-100 transition text-[10px] uppercase">Reset Canvas</button></div></div><div className={`flex-1 rounded-[45px] overflow-hidden shadow-2xl border-8 border-white relative transition-all ${!selectedCampusId && 'grayscale opacity-50'}`}><MapContainer center={[10.985464, 39.263236]} zoom={18} className="h-full w-full z-10 font-sans italic font-bold"><TileLayer url="https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" subdomains={['mt0','mt1','mt2','mt3']} />{selectedCampusId && campuses.find(c => c.id == selectedCampusId) && <AutoFocusMap coords={[campuses.find(c => c.id == selectedCampusId).latitude, campuses.find(c => c.id == selectedCampusId).longitude]} />}{existingRoads.map((node, idx) => (<React.Fragment key={idx}><CircleMarker center={[node.latitude, node.longitude]} radius={5} pathOptions={{ color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.9 }} ><Popup><p className="font-black text-ma-blue text-[10px]">Saved Point: #{node.id}</p></Popup></CircleMarker>{node.edges && node.edges.map((edge, eIdx) => { const target = existingRoads.find(n => n.id === edge.endNodeId); return target && <Polyline key={eIdx} positions={[[node.latitude, node.longitude], [target.latitude, target.longitude]]} color="#22c55e" weight={4} opacity={0.7} />; })}</React.Fragment>))}<SatelliteRoadBuilder nodes={roadNodes} onNodeAdd={(node) => setRoadNodes([...roadNodes, node])} /></MapContainer></div></div>
           </div>
         )}
 
-        {/* 🏢 Universal Modal */}
+        {/* 🏢 Universal Modal - 🚀 ተሻሽሏል (Direct File Upload & Description) */}
         {showModal && (
           <div className="fixed inset-0 bg-ma-blue/90 backdrop-blur-xl z-[100] flex items-center justify-center p-6 text-ma-blue font-bold italic leading-none font-black italic uppercase">
-            <div className="bg-white w-full max-w-xl rounded-[60px] shadow-2xl p-16 relative border-t-[18px] border-ma-gold animate-in zoom-in duration-300 overflow-hidden text-ma-blue italic font-bold">
+            <div className="bg-white w-full max-w-xl rounded-[60px] shadow-2xl p-12 relative border-t-[18px] border-ma-gold animate-in zoom-in duration-300 overflow-hidden text-ma-blue italic font-bold">
               <button onClick={() => setShowModal(false)} className="absolute top-10 right-10 text-slate-300 hover:text-red-500 transition-colors shadow-2xl italic leading-none font-black"><X size={44}/></button>
-              <h3 className="text-3xl font-black mb-10 italic capitalize underline decoration-ma-gold decoration-8 text-ma-blue leading-none uppercase">{isEditMode ? 'Update' : 'Register'} {modalType.toUpperCase()}</h3>
-              <form onSubmit={handleSubmit} className="space-y-8 text-ma-blue font-bold italic font-black leading-none uppercase">
-                <input type="text" required className="w-full p-6 bg-gray-100 border-none rounded-[30px] focus:ring-4 focus:ring-ma-gold/20 font-black text-lg shadow-inner text-ma-blue italic font-bold leading-none uppercase" placeholder={`${modalType} Name`} value={formData.fullName || formData.name || ""} onChange={e => setFormData({...formData, name: e.target.value, fullName: e.target.value})} />
+              
+              <h3 className="text-3xl font-black mb-10 italic capitalize underline decoration-ma-gold decoration-8 text-ma-blue leading-none uppercase">
+                {isEditMode ? 'Update' : 'Register'} {modalType.toUpperCase()}
+              </h3>
+
+              <form onSubmit={handleSubmit} className="space-y-6 text-ma-blue font-bold italic font-black leading-none uppercase">
                 
+                {/* 1. Name Input */}
+                <div className="space-y-2">
+                  <label className="text-[10px] text-ma-gold ml-4">Full Name/Title</label>
+                  <input type="text" required className="w-full p-5 bg-gray-100 border-none rounded-[25px] focus:ring-4 focus:ring-ma-gold/20 font-black text-lg shadow-inner text-ma-blue italic uppercase" placeholder={`${modalType} Name`} value={formData.fullName || formData.name || ""} onChange={e => setFormData({...formData, name: e.target.value, fullName: e.target.value})} />
+                </div>
+
+                {/* 2. Room Number - Specific for Office */}
+                {modalType === 'office' && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-ma-gold ml-4">Room Identification</label>
+                    <input type="text" className="w-full p-5 bg-gray-50 border-none rounded-[25px] font-bold shadow-inner text-ma-blue" placeholder="Room Number (e.g. R-101)" value={formData.roomNumber || ""} onChange={e => setFormData({...formData, roomNumber: e.target.value})} />
+                  </div>
+                )}
+
+                {/* 🚀 3. አዲስ፡ የፎቶ መጫኛ (Direct File Upload) */}
+                {(modalType === 'campus' || modalType === 'building' || modalType === 'office') && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-ma-gold ml-4">Photo/Image (Select File)</label>
+                    <div className="flex items-center gap-4 bg-gray-50 p-5 rounded-[25px] border-2 border-dashed border-gray-200 hover:border-ma-gold transition-colors relative">
+                        <Upload className="text-ma-gold" size={24} />
+                        <span className="text-[10px] text-gray-500">
+                          {formData.imageUrl ? "Image Ready ✅" : "Click to select image file..."}
+                        </span>
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={handleFileUpload}
+                        />
+                        {formData.imageUrl && (
+                          <div className="ml-auto w-12 h-12 rounded-lg overflow-hidden border-2 border-white shadow-md">
+                            <img src={formData.imageUrl} alt="preview" className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Description - For Campus, Building, and Office */}
+                {(modalType === 'campus' || modalType === 'building' || modalType === 'office') && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-ma-gold ml-4">Detailed Description</label>
+                    <textarea rows="3" className="w-full p-5 bg-gray-50 border-none rounded-[25px] focus:ring-4 focus:ring-ma-gold/20 font-medium shadow-inner text-ma-blue text-sm" placeholder={`Write a short info about this ${modalType}...`} value={formData.description || ""} onChange={e => setFormData({...formData, description: e.target.value})} />
+                  </div>
+                )}
+                
+                {/* User Specific Inputs */}
                 {modalType === 'user' && (
-                  <div className="space-y-6 italic font-bold leading-none font-black italic uppercase">
-                    <input type="email" placeholder="Admin Email" className="w-full p-6 bg-gray-50 rounded-[30px] font-black italic shadow-inner leading-none italic font-bold text-ma-blue" value={formData.email || ""} onChange={e => setFormData({...formData, email: e.target.value})} />
-                    <input type="password" placeholder="Set Password" className="w-full p-6 bg-gray-50 rounded-[30px] font-black italic shadow-inner leading-none italic font-bold text-ma-blue" value={formData.password || ""} onChange={e => setFormData({...formData, password: e.target.value, role: 'Admin'})} />
+                  <div className="space-y-4">
+                    <input type="email" placeholder="Admin Email" className="w-full p-5 bg-gray-50 rounded-[25px] font-black shadow-inner text-ma-blue" value={formData.email || ""} onChange={e => setFormData({...formData, email: e.target.value})} />
+                    <input type="password" placeholder="Set Password" className="w-full p-5 bg-gray-50 rounded-[25px] font-black shadow-inner text-ma-blue" value={formData.password || ""} onChange={e => setFormData({...formData, password: e.target.value, role: 'Admin'})} />
                   </div>
                 )}
                 
+                {/* GPS Inputs */}
                 {(modalType === 'campus' || modalType === 'building' || modalType === 'poi') && (
-                  <div className="grid grid-cols-2 gap-8 font-bold italic text-ma-blue leading-none italic font-black uppercase">
-                    <input type="number" step="any" placeholder="Latitude" className="p-6 bg-gray-100 rounded-[30px] font-black shadow-inner text-sm italic font-bold leading-none font-bold uppercase" value={formData.latitude || ""} onChange={e => setFormData({...formData, latitude: parseFloat(e.target.value)})} />
-                    <input type="number" step="any" placeholder="Longitude" className="p-6 bg-gray-100 rounded-[30px] font-black shadow-inner text-sm italic font-bold leading-none font-bold uppercase" value={formData.longitude || ""} onChange={e => setFormData({...formData, longitude: parseFloat(e.target.value)})} />
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-ma-gold ml-4">Latitude</label>
+                      <input type="number" step="any" className="w-full p-5 bg-gray-100 rounded-[25px] font-black shadow-inner text-sm text-ma-blue" value={formData.latitude || ""} onChange={e => setFormData({...formData, latitude: parseFloat(e.target.value)})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] text-ma-gold ml-4">Longitude</label>
+                      <input type="number" step="any" className="w-full p-5 bg-gray-100 rounded-[25px] font-black shadow-inner text-sm text-ma-blue" value={formData.longitude || ""} onChange={e => setFormData({...formData, longitude: parseFloat(e.target.value)})} />
+                    </div>
                   </div>
                 )}
-                <button type="submit" className="w-full bg-ma-blue text-white py-8 rounded-[35px] font-black text-xl hover:bg-blue-900 shadow-2xl transition transform active:scale-95 italic tracking-widest text-white uppercase font-black underline decoration-ma-gold decoration-4 tracking-[3px]">Confirm and Save Changes</button>
+
+                <button type="submit" className="w-full bg-ma-blue text-white py-6 rounded-[30px] font-black text-xl hover:bg-blue-900 shadow-2xl transition transform active:scale-95 italic tracking-widest uppercase underline decoration-ma-gold decoration-4">
+                  Save Information
+                </button>
               </form>
             </div>
           </div>

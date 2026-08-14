@@ -31,4 +31,10 @@ public class OfficeService : IOfficeService
         var office = await _context.Offices.FindAsync(id);
         if (office != null) { _context.Offices.Remove(office); await _context.SaveChangesAsync(); }
     }
+    public async Task<Office?> GetOfficeByIdAsync(int id)
+    {
+        return await _context.Offices.FindAsync(id);
+    }
+
+   
 }

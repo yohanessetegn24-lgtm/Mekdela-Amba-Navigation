@@ -26,10 +26,33 @@ public class OfficesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Office>> Create(OfficeDto officeDto)
     {
+        // 🚀 Description እና ImageUrl እዚህ ጋር Map ይደረጋሉ
         var office = _mapper.Map<Office>(officeDto);
         return Ok(await _officeService.CreateOfficeAsync(office));
     }
 
+    // 🚀 አዲስ፡ የOffice መረጃን ለማስተካከል (ለ Edit Button አስፈላጊ ነው)
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateOffice(int id, OfficeDto officeDto)
+    {
+        if (id != officeDto.Id) return BadRequest("ID Mismatch");
+
+        var existingOffice = await _officeService.GetOfficeByIdAsync(id);
+        if (existingOffice == null) return NotFound();
+
+        // መረጃውን Map አድርግ
+        _mapper.Map(officeDto, existingOffice);
+
+        await _officeService.UpdateOfficeAsync(existingOffice);
+        return NoContent();
+    }
+
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id) { await _officeService.DeleteOfficeAsync(id); return NoContent(); }
+    public async Task<IActionResult> Delete(int id)
+    {
+        await _officeService.DeleteOfficeAsync(id);
+        return NoContent();
+    }
+
+
 }
