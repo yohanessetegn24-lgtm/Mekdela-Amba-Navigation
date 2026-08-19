@@ -33,7 +33,7 @@ builder.Services.AddScoped<ICampusService, CampusService>();
 builder.Services.AddScoped<IBuildingService, BuildingService>();
 builder.Services.AddScoped<IPointOfInterestService, PointOfInterestService>();
 builder.Services.AddScoped<IOfficeService, OfficeService>();
-
+builder.Services.AddScoped<MekdelaAmbaCampusNavigation.Infrastructure.Services.EmailService>();
 // 4. AutoMapper መመዝገብ
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 

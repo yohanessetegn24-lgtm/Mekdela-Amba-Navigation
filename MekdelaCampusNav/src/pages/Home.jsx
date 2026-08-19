@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Map as MapIcon, LogIn, ChevronRight, GraduationCap } from 'lucide-react';
-// 🚀 ፎቶውን ወደ አንተ እውነተኛ የግቢ ፎቶ ቀየርኩት
+// 🚀 ፎቶው ከአሴትስ (assets) በትክክል እንዲመጣ
 import campusImg from '../assets/mekdelaambauniversity.jpg'; 
 
 const Home = () => {
@@ -21,7 +21,6 @@ const Home = () => {
           </span>
         </div>
         
-        {/* 🚀 አሁን Login በተኑ በወርቃማ ቀለም ደምቆ እንዲታይ ተደርጓል */}
         <button 
           onClick={() => navigate('/login')}
           className="flex items-center gap-2 bg-ma-gold text-ma-blue px-8 py-3 rounded-full font-black text-sm uppercase tracking-widest hover:bg-white transition-all duration-300 shadow-[0_10px_30px_rgba(196,160,6,0.5)] leading-none transform active:scale-95 border-2 border-ma-gold"
@@ -34,14 +33,13 @@ const Home = () => {
       {/* 2. HERO SECTION */}
       <section className="relative flex-1 flex items-center justify-center text-white overflow-hidden">
         
-        {/* 📸 Background Image - አሁን ፎቶው በደማቁ እንዲታይ ተደርጓል */}
+        {/* 📸 Background Image */}
         <div className="absolute inset-0 z-0">
           <img 
             src={campusImg} 
             alt="Mekdela Amba University" 
             className="w-full h-full object-cover" 
           />
-          {/* 🌓 Overlay ማስተካከያ - ፎቶው በደንብ እንዲታይ (ቀጭን ጥላ ብቻ ነው ያለው) */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent"></div>
         </div>
 
@@ -62,17 +60,18 @@ const Home = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-5 pt-4 leading-none text-left">
+              {/* 🚀 አዲስ፡ በቀጥታ ወደ ካርታው (MapPage) የሚወስድ በተን */}
               <button 
-                onClick={() => navigate('/campuses')}
-                className="group flex items-center justify-center gap-3 bg-ma-gold text-ma-blue px-10 py-6 rounded-3xl font-black text-xl hover:bg-white transition-all duration-300 shadow-[0_20px_60px_rgba(0,32,78,0.4)] uppercase tracking-widest leading-none"
+                onClick={() => navigate('/map/1')}
+                className="group flex items-center justify-center gap-3 bg-ma-gold text-ma-blue px-10 py-6 rounded-3xl font-black text-xl hover:bg-white transition-all duration-300 shadow-[0_20px_60px_rgba(0,32,78,0.4)] uppercase tracking-widest leading-none transform active:scale-95"
               >
-                Explore Campuses
+                EXPLORE MAP
                 <ChevronRight className="group-hover:translate-x-2 transition-transform" />
               </button>
             </div>
           </div>
 
-          {/* Right Decoration - Glass Box */}
+          {/* Right Decoration - Satellite Map Box */}
           <div className="hidden lg:flex justify-end items-center leading-none">
             <div className="relative leading-none">
               <div className="w-80 h-80 bg-white/10 backdrop-blur-xl border border-white/20 rounded-[60px] shadow-2xl flex items-center justify-center transform rotate-6 hover:rotate-0 transition-all duration-700">
