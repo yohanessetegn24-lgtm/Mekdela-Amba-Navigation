@@ -3,7 +3,7 @@ using MekdelaAmbaCampusNavigation.Application.Mappings;
 using MekdelaAmbaCampusNavigation.Infrastructure.Persistence;
 using MekdelaAmbaCampusNavigation.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization; // 👈 ይህ ለስህተቱ መፍትሄ አስፈላጊ ነው
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +17,6 @@ builder.Services.AddCors(options => {
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // 👈 ይህ መስመር ካምፓስ እና ህንጻ እርስ በርስ በሚጠራሩበት ጊዜ የሚፈጠረውን ስህተት ያስቀራል
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
 
@@ -33,7 +32,11 @@ builder.Services.AddScoped<ICampusService, CampusService>();
 builder.Services.AddScoped<IBuildingService, BuildingService>();
 builder.Services.AddScoped<IPointOfInterestService, PointOfInterestService>();
 builder.Services.AddScoped<IOfficeService, OfficeService>();
-builder.Services.AddScoped<MekdelaAmbaCampusNavigation.Infrastructure.Services.EmailService>();
+builder.Services.AddScoped<EmailService>();
+
+// 🚀 አዲስ የተጨመረ፡ የናቪጌሽን ስሌት ሰርቪስ
+builder.Services.AddScoped<RoutingService>(); 
+
 // 4. AutoMapper መመዝገብ
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
@@ -50,8 +53,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// ⚠️ የ Middleware ቅደም ተከተል በጣም ወሳኝ ነው
-app.UseCors("AllowReactApp"); // መጀመሪያ CORS
+app.UseCors("AllowReactApp"); 
 
 app.UseHttpsRedirection();
 

@@ -16,7 +16,39 @@ import mkaulogo from '../assets/mkaulogo.jpg';
 import tuluImg from '../assets/mekdelaambauniversity.jpg'; 
 import mekaneImg from '../assets/homepage.jpg'; 
 
+// --- 🚀 1. Helper: getDist (ስህተቱን ለመፍታት እዚህ ታክሏል) ---
+const getDist = (p1, p2) => {
+    if (!p1 || !p2 || !p1[0] || !p2[0]) return 0;
+    const R = 6371000; 
+    const dLat = (p2[0] - p1[0]) * Math.PI / 180;
+    const dLon = (p2[1] - p1[1]) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(p1[0] * Math.PI / 180) * Math.cos(p2[0] * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
 
+// --- 🚀 2. Helper: findPath (መንገድ ፍለጋ ስህተት እንዳይሰጥ) ---
+const findPath = (network, startId, endId) => {
+    let queue = [[startId]];
+    let visited = new Set();
+    while (queue.length > 0) {
+        let path = queue.shift();
+        let node = path[path.length - 1];
+        if (node === endId) return path.map(id => {
+            const n = network.find(i => i.id === id);
+            return [n.latitude, n.longitude];
+        });
+        if (!visited.has(node)) {
+            visited.add(node);
+            const currentNode = network.find(n => n.id === node);
+            (currentNode?.edges || []).forEach(edge => {
+                queue.push([...path, edge.endNodeId]);
+            });
+        }
+    }
+    return [];
+};
 
 // --- 🚀 Icons Setup ---
 const userIconRed = new L.Icon({
@@ -36,7 +68,11 @@ const buildingIconBlue = new L.Icon({
 // --- 🗺️ Map Controller ---
 function MapController({ coords, zoomLevel }) {
   const map = useMap();
-  useEffect(() => { if (coords) map.setView(coords, zoomLevel || 18, { animate: true }); }, [coords, map, zoomLevel]);
+  useEffect(() => { 
+    if (coords && coords[0] !== 0) {
+      map.setView(coords, zoomLevel || 18, { animate: true }); 
+    }
+  }, [coords, zoomLevel, map]); // Fixed dependencies
   return null;
 }
 
@@ -67,8 +103,14 @@ const MapPage = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [c, b, r] = await Promise.all([api.get(`/Campuses/${campusId}`), api.get(`/Buildings/campus/${campusId}`), api.get(`/Roads/network/${campusId}`)]);
-        setCurrentCampus(c.data); setBuildings(b.data); setRoadNetwork(r.data || []); 
+        const [c, b, r] = await Promise.all([
+            api.get(`/Campuses/${campusId}`), 
+            api.get(`/Buildings/campus/${campusId}`), 
+            api.get(`/Roads/network/${campusId}`)
+        ]);
+        setCurrentCampus(c.data); 
+        setBuildings(b.data); 
+        setRoadNetwork(r.data || []); 
         setMapCenter([c.data.latitude, c.data.longitude]);
         setLoading(false);
       } catch (err) { setLoading(false); }
@@ -78,22 +120,31 @@ const MapPage = () => {
     return () => navigator.geolocation.clearWatch(watchId);
   }, [campusId]);
 
+  // --- 🚀 Fixed useEffect Warning ---
   useEffect(() => {
     if (userPos && selectedBuilding && routePath.length > 0) {
       let d = getDist(userPos, routePath[0]);
-      for (let i = 0; i < routePath.length - 1; i++) d += getDist(routePath[i], routePath[i+1]);
-      setDistance(Math.round(d)); setEta(Math.max(1, Math.round(d / (navMode === 'walking' ? 80 : 300))));
+      for (let i = 0; i < routePath.length - 1; i++) {
+          d += getDist(routePath[i], routePath[i+1]);
+      }
+      setDistance(Math.round(d)); 
+      setEta(Math.max(1, Math.round(d / (navMode === 'walking' ? 80 : 300))));
     }
-  }, [userPos, routePath, navMode, selectedBuilding]);
+  }, [userPos, routePath, navMode, selectedBuilding]); // Use fixed states
 
   const startNav = (target) => {
-    setSelectedBuilding(target); setActiveBuildingDetails(null); setShowDirectionsMenu(false); setIsNavigating(true);
+    setSelectedBuilding(target); 
+    setActiveBuildingDetails(null); 
+    setShowDirectionsMenu(false); 
+    setIsNavigating(true);
     if (userPos && roadNetwork.length > 0) {
        const startNode = roadNetwork.reduce((p, c) => getDist(userPos, [c.latitude, c.longitude]) < getDist(userPos, [p.latitude, p.longitude]) ? c : p);
        const endNode = roadNetwork.reduce((p, c) => getDist([target.latitude, target.longitude], [c.latitude, c.longitude]) < getDist([target.latitude, target.longitude], [p.latitude, p.longitude]) ? c : p);
        const path = findPath(roadNetwork, startNode.id, endNode.id);
        setRoutePath(path.length > 0 ? [[userPos[0], userPos[1]], ...path, [target.latitude, target.longitude]] : [[userPos[0], userPos[1]], [target.latitude, target.longitude]]);
-    } else if (userPos) { setRoutePath([[userPos[0], userPos[1]], [target.latitude, target.longitude]]); }
+    } else if (userPos) { 
+        setRoutePath([[userPos[0], userPos[1]], [target.latitude, target.longitude]]); 
+    }
   };
 
   const handleStopNavigation = () => {
@@ -120,10 +171,9 @@ const MapPage = () => {
          </button>
       </header>
 
-      {/* 🧩 2. MAIN MAP AREA (NOW 100% WIDTH) */}
+      {/* 🧩 2. MAIN MAP AREA */}
       <div className="flex-1 relative h-full w-full">
            
-           {/* 🔍 FLOATING SEARCH BAR */}
            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-2xl bg-white/95 backdrop-blur-md px-4 py-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.2)] rounded-2xl flex items-center gap-3 border border-ma-gold/20 no-print">
               <div className="flex-1 bg-slate-50 rounded-xl flex items-center px-4 py-2.5 border shadow-inner">
                  <input 
@@ -220,14 +270,11 @@ const MapPage = () => {
            )}
       </div>
 
-      {/* 🏛️ 3. FULL WIDTH DEVELOPER FOOTER */}
       <footer className="bg-[#00204E] py-4 border-t-2 border-ma-gold/20 text-center no-print shrink-0 z-50">
-         <p className="text-[11px] font-black tracking-[8px] text-blue-200 uppercase italic">
-            Developed by <span className="text-ma-gold">"YGSH"</span>
-         </p>
+         <p className="text-[11px] font-black tracking-[8px] text-blue-200 uppercase italic">Developed by <span className="text-ma-gold">"YGSH"</span></p>
       </footer>
 
-      {/* 🏫 CAMPUS SELECTION OVERLAY */}
+      {/* 🏫 CAMPUS OVERLAY */}
       {showCampusOverlay && (
         <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-xl flex items-center justify-center p-6">
            <div className="bg-white w-full max-w-6xl rounded-[60px] shadow-2xl p-16 relative border-t-[20px] border-ma-gold animate-in zoom-in duration-500 overflow-y-auto max-h-[90vh]">
@@ -245,7 +292,7 @@ const MapPage = () => {
         </div>
       )}
 
-      {/* 🏬 BUILDING DETAILS OVERLAY */}
+      {/* 🏬 BUILDING DETAILS */}
       {activeBuildingDetails && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-3xl rounded-[60px] shadow-2xl overflow-hidden border-t-[16px] border-ma-gold animate-in zoom-in duration-300">

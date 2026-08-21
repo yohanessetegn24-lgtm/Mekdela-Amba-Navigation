@@ -1,17 +1,25 @@
-﻿namespace MekdelaAmbaCampusNavigation.Domain.Entities;
+﻿using MekdelaAmbaCampusNavigation.Domain.Enums;
+using System.Collections.Generic;
+
+namespace MekdelaAmbaCampusNavigation.Domain.Entities;
 
 public class Building
 {
     public int Id { get; set; }
-    public string Name { get; set; } = string.Empty; // ለምሳሌ፡ ብሎክ 1
+    public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public string ImageUrl { get; set; } = string.Empty; // የህንጻው ፎቶ
+    public string ImageUrl { get; set; } = string.Empty;
 
-    // GPS Coordinates
+    // 🚀 አዲስ፡ ለ Building Details Page (Image 8)
+    public BuildingType Type { get; set; } = BuildingType.Academic;
+    public string? OpeningHours { get; set; } = "Mon - Fri  8:00 AM - 5:30 PM";
+
     public double Latitude { get; set; }
     public double Longitude { get; set; }
 
-    // ህንጻው የትኛው ካምፓስ ውስጥ እንደሆነ ለማወቅ
     public int CampusId { get; set; }
     public Campus Campus { get; set; } = null!;
+
+    // 🚀 አዲስ፡ አንድ ህንጻ ብዙ ቢሮዎች ይኖሩታል
+    public ICollection<Office> Offices { get; set; } = new List<Office>();
 }

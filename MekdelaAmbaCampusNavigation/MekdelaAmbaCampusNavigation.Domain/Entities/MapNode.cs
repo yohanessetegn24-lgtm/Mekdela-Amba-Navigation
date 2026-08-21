@@ -1,4 +1,6 @@
-﻿namespace MekdelaAmbaCampusNavigation.Domain.Entities;
+﻿using System.Collections.Generic;
+
+namespace MekdelaAmbaCampusNavigation.Domain.Entities;
 
 public class MapNode
 {
@@ -7,7 +9,7 @@ public class MapNode
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public int CampusId { get; set; }
+    public Campus Campus { get; set; } = null!;
 
-    // ይህ ነጥብ ከሌሎች ነጥቦች ጋር ያለው ግንኙነት (Edges)
     public ICollection<MapEdge> Edges { get; set; } = new List<MapEdge>();
 }
