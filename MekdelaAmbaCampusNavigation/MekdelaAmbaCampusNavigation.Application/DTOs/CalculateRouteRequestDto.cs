@@ -1,14 +1,9 @@
-namespace MekdelaAmbaCampusNavigation.Application.DTOs;
+namespace MekdelaAmbaCampusNavigation.Application.DTOs; // Namespace ተስተካክሏል
 
 public class CalculateRouteRequestDto
 {
-    // ተማሪው አሁን ያለበት የ GPS ቦታ
-    public double StartLatitude { get; set; }
-    public double StartLongitude { get; set; }
-
-    // መድረስ የሚፈልግበት ህንጻ መለያ ቁጥር (ID)
+    public double StartLatitude { get; set; } // ከ UserLatitude ወደ StartLatitude ተቀይሯል
+    public double StartLongitude { get; set; } // ከ UserLongitude ወደ StartLongitude ተቀይሯል
     public int DestinationBuildingId { get; set; }
-
-    // አማራጭ፡ ለእግረኛ ወይስ ለመኪና? (Default: Walking)
-    public string TravelMode { get; set; } = "Walking";
+    public string TravelMode { get; set; } = "Walking"; 
 }

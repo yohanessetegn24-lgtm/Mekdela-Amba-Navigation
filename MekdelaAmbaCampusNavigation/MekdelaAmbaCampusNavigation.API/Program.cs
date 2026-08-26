@@ -7,42 +7,43 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CORS Policy ለ React መፍቀድ
+// CORS Policy - ማንኛውንም እንዲቀበል (ለDevelopment በጣም አሪፍ ነው)
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowReactApp",
-        policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+        policy => policy.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader());
 });
 
-// 1. Controllers (የ JSON አዙሪት ስህተትን እዚህ ጋር እናስተካክላለን)
+// Controllers እና JSON Options
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
+        // 1. ለአዙሪት ግንኙነት (Node -> Edge -> Node)
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        // 2. በ C# የጻፍከው ስም (ለምሳሌ Path) ለሪአክትም በዛው ስም እንዲሄድ
+        options.JsonSerializerOptions.PropertyNamingPolicy = null; 
     });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 2. የዳታቤዝ ግንኙነት (Database Connection)
+// Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 3. Dependency Injection (Interface እና Implementation ማገናኘት)
+// Dependency Injection
 builder.Services.AddScoped<ICampusService, CampusService>();
 builder.Services.AddScoped<IBuildingService, BuildingService>();
 builder.Services.AddScoped<IPointOfInterestService, PointOfInterestService>();
 builder.Services.AddScoped<IOfficeService, OfficeService>();
 builder.Services.AddScoped<EmailService>();
-
-// 🚀 አዲስ የተጨመረ፡ የናቪጌሽን ስሌት ሰርቪስ
 builder.Services.AddScoped<RoutingService>(); 
 
-// 4. AutoMapper መመዝገብ
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 var app = builder.Build();
 
-// 5. የ Swagger UI ዝግጅት
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -53,9 +54,10 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseCors("AllowReactApp"); 
+// 🚀 የ Middleware ቅደም ተከተል ማስተካከያ
+app.UseHttpsRedirection(); // መጀመሪያ HTTPS ይሁን
 
-app.UseHttpsRedirection();
+app.UseCors("AllowReactApp"); // ከዚያ CORS ይፈቀድ
 
 app.UseAuthorization();
 

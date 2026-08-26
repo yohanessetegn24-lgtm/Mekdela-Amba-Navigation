@@ -1,15 +1,17 @@
 import React from 'react';
-// 🚀 አንድ ላይ የተጠቃለለ Import (Duplicates ተወግደዋል)
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// --- 🏠 የPublic ገጾች Imports ---
+// --- 🏠 የPublic (ለሁሉም ሰው ክፍት የሆኑ) ገጾች ---
 import Home from './pages/Home';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
-import CampusSelection from './pages/CampusSelection';
 import MapPage from './pages/MapPage';
+import CampusesPage from './pages/CampusesPage'; // አዲሱ ዝርዝር ገጽ
+import AboutUs from './pages/AboutUs';
+import Services from './pages/Services';
+import Contact from './pages/Contact';
 
-// --- 🛠️ የAdmin ገጾች Imports (ከአዲሱ ፎልደር) ---
+// --- 🛠️ የAdmin (ለአስተዳዳሪ ብቻ) ገጾች ---
 import AdminLayout from './components/admin/AdminLayout';
 import Dashboard from './pages/admin/Dashboard';
 import ManageCampuses from './pages/admin/ManageCampuses';
@@ -22,16 +24,22 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* 1. 🌍 የሁሉም ሰው (Public) መንገዶች */}
+        
+        {/* 1. 🌍 Public Routes (ሁሉም ተጠቃሚ የሚያያቸው) */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/campuses" element={<CampusSelection />} />
         <Route path="/map/:campusId" element={<MapPage />} />
+        
+        {/* የHome Page ናቭባር ሊንኮች እዚህ ጋር ናቸው */}
+        <Route path="/campuses" element={<CampusesPage />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/contact" element={<Contact />} />
 
-        {/* 2. 🔐 የAdmin መንገዶች (በ AdminLayout ውስጥ የታቀፉ) */}
+        {/* 2. 🔐 Admin Routes (በ AdminLayout ውስጥ የታቀፉ) */}
         <Route path="/admin" element={<AdminLayout />}>
-          {/* /admin ተብሎ ብቻ ሲመጣ በቀጥታ ወደ dashboard እንዲሄድ */}
+          {/* /admin ተብሎ ብቻ ሲመጣ በቀጥታ ወደ dashboard ይወስዳል */}
           <Route index element={<Navigate to="dashboard" replace />} />
           
           <Route path="dashboard" element={<Dashboard />} />
@@ -39,15 +47,15 @@ function App() {
           <Route path="buildings" element={<ManageBuildings />} />
           <Route path="users" element={<ManageAdmins />} />
           <Route path="roads" element={<RoadDesigner />} />
-           <Route path="offices" element={<OfficeHierarchy />} /> 
+          <Route path="offices" element={<OfficeHierarchy />} /> 
         </Route>
 
-        {/* 404 - ያልተመዘገበ መንገድ ሲመጣ ወደ Home እንዲመልስ */}
+        {/* 3. 🚫 404 - መንገድ ቢጠፋ ወደ Home እንዲመለስ */}
         <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
     </Router>
   );
 }
 
-// ✅ አሁን በትክክል Export ተደርጓል
 export default App;

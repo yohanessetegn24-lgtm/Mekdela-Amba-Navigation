@@ -19,46 +19,63 @@ public class RoutingService
         _context = context;
     }
 
-    public async Task<NavigationResultDto> CalculateRoute(CalculateRouteRequestDto request)
+    // 🧠 ዋናው የናቪጌሽን ስሌት (The Navigation Heart)
+    // Task<NavigationResultDto?> ማድረጋችን null ሊመለስ እንደሚችል ለሲስተሙ ይነግረዋል (Warning ያጠፋል)
+    public async Task<NavigationResultDto?> CalculateRoute(CalculateRouteRequestDto request)
     {
+        // 1. መድረሻ ህንጻውን ማግኘት
         var building = await _context.Buildings.FindAsync(request.DestinationBuildingId);
         if (building == null) return null;
 
-        // 🚀 ማሻሻያ 1: በመንገድ አይነት (Walking vs Driving) መለየት
-        // ተማሪው 'Driving' ከመረጠ የ'Pedestrian' መንገዶችን አይጠቀምም
+        // 2. የካምፓሱን የመንገድ መረብ መጫን 
         var allNodes = await _context.MapNodes
-            .Include(n => n.Edges.Where(e => e.Status == RoadStatus.Active)) 
             .Where(n => n.CampusId == building.CampusId)
             .ToListAsync();
 
-        if (!allNodes.Any()) return null;
+        var allEdges = await _context.MapEdges
+            .Where(e => e.Status == RoadStatus.Active) 
+            .ToListAsync();
 
-        // 📍 SNAP TO ROAD
-        var startNode = allNodes.OrderBy(n => GetHaversineDistance(request.StartLatitude, request.StartLongitude, n.Latitude, n.Longitude)).First();
-        var endNode = allNodes.OrderBy(n => GetHaversineDistance(building.Latitude, building.Longitude, n.Latitude, n.Longitude)).First();
+        if (allNodes == null || !allNodes.Any() || allEdges == null || !allEdges.Any()) return null;
 
-        // 🧠 DIJKSTRA: አሁን ተማሪው የመረጠውን TravelMode ያውቃል
-        var pathNodes = RunDijkstra(allNodes, startNode.Id, endNode.Id, request.TravelMode);
+        // 3. 📍 SNAP TO ROAD: ለተማሪው GPS በጣም ቅርብ ያለውን 'Node' መፈለግ
+        var startNode = allNodes
+            .OrderBy(n => GetHaversineDistance(request.StartLatitude, request.StartLongitude, n.Latitude, n.Longitude))
+            .FirstOrDefault();
+        
+        // 4. ለህንጻው መግቢያ ቅርብ የሆነውን 'Node' መፈለግ
+        var endNode = allNodes
+            .OrderBy(n => GetHaversineDistance(building.Latitude, building.Longitude, n.Latitude, n.Longitude))
+            .FirstOrDefault();
+
+        if (startNode == null || endNode == null) return null;
+
+        // 5. 🧠 DIJKSTRA ALGORITHM: በመንገዱ ላይ ብቻ ያለውን አጭር መንገድ ያሰላል
+        var pathNodes = RunDijkstra(allNodes, allEdges, startNode.Id, endNode.Id, request.TravelMode);
 
         if (pathNodes == null || !pathNodes.Any()) return null;
 
+        // 6. ውጤቱን ማቀናጀት (Distance + ETA + Path)
         var totalDistance = CalculateTotalPathDistance(pathNodes);
         
-        // 🚀 ማሻሻያ 2: ተለዋዋጭ ETA (Estimated Time)
-        // በእግር 80m/min | በመኪና 300m/min (20km/h ገደማ)
+        // ፍጥነትን መወሰን (በሜትር በደቂቃ)
         double speed = request.TravelMode.Equals("Driving", StringComparison.OrdinalIgnoreCase) ? 300 : 80;
 
         var result = new NavigationResultDto
         {
             TotalDistanceMeters = totalDistance,
             EstimatedMinutes = (int)Math.Max(1, Math.Round(totalDistance / speed)),
-            Path = pathNodes.Select(n => new CoordinateDto { Latitude = n.Latitude, Longitude = n.Longitude }).ToList()
+            Path = pathNodes.Select(n => new CoordinateDto { 
+                Latitude = n.Latitude, 
+                Longitude = n.Longitude 
+            }).ToList()
         };
 
         return result;
     }
 
-    private List<MapNode> RunDijkstra(List<MapNode> nodes, int startId, int endId, string travelMode)
+    // 🧠 Dijkstra Core Logic (Bidirectional & Traffic Aware)
+    private List<MapNode>? RunDijkstra(List<MapNode> nodes, List<MapEdge> edges, int startId, int endId, string travelMode)
     {
         var distances = nodes.ToDictionary(n => n.Id, n => double.MaxValue);
         var previous = nodes.ToDictionary(n => n.Id, n => (int?)null);
@@ -69,22 +86,25 @@ public class RoutingService
         while (unvisited.Any())
         {
             var currentId = unvisited.OrderBy(id => distances[id]).First();
+            if (distances[currentId] == double.MaxValue || currentId == endId) break;
             unvisited.Remove(currentId);
 
-            if (currentId == endId || distances[currentId] == double.MaxValue) break;
+            // መንገዶችን በሁለቱም አቅጣጫ መፈለግ (Bidirectional)
+            var currentEdges = edges.Where(e => e.StartNodeId == currentId || e.EndNodeId == currentId).ToList();
 
-            var currentNode = nodes.First(n => n.Id == currentId);
-            foreach (var edge in currentNode.Edges)
+            foreach (var edge in currentEdges)
             {
-                // 🚀 ማሻሻያ 3: የ "Road Type" ገደብን ቼክ ማድረግ
-                // Driving ከሆነ እና መንገዱ ለደረጃ/ለእግር ብቻ ከሆነ አልጎሪዝሙ ይዘለዋል
                 if (travelMode.Equals("Driving", StringComparison.OrdinalIgnoreCase) && edge.Type == RoadType.Pedestrian)
                     continue;
 
-                var neighborId = edge.EndNodeId;
+                var neighborId = (edge.StartNodeId == currentId) ? edge.EndNodeId : edge.StartNodeId;
+                
                 if (!unvisited.Contains(neighborId)) continue;
 
-                var alt = distances[currentId] + edge.Distance;
+                // 🚀 አዲሱ ማሻሻያ፡ TrafficFactor በመጠቀም ክብደትን (Weight) ማስላት
+                double trafficWeight = edge.TrafficFactor > 0 ? edge.TrafficFactor : 1.0;
+                var alt = distances[currentId] + (edge.Distance * trafficWeight);
+
                 if (alt < distances[neighborId])
                 {
                     distances[neighborId] = alt;
@@ -103,9 +123,10 @@ public class RoutingService
             curr = previous[curr.Value];
         }
 
-        return distances[endId] == double.MaxValue ? null : path;
+        return (path.Count > 0 && path[0].Id == startId) ? path : null;
     }
 
+    // 📐 የርቀት ማስያ (Haversine Formula)
     private double GetHaversineDistance(double lat1, double lon1, double lat2, double lon2)
     {
         var R = 6371000; 
@@ -117,6 +138,7 @@ public class RoutingService
         return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
     }
 
+    // 📐 የመንገዱን ጠቅላላ ርዝመት መደመር
     private double CalculateTotalPathDistance(List<MapNode> path)
     {
         double total = 0;
