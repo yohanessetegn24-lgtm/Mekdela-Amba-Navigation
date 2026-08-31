@@ -120,7 +120,7 @@ public class RoutingService
             foreach (var edge in currentEdges)
             {
                 // ለመኪና የማይሆኑ መንገዶችን ማለፍ
-                if (travelMode.Equals("Driving", StringComparison.OrdinalIgnoreCase) && edge.Type == RoadStatus.Closed)
+                if (travelMode.Equals("Driving", StringComparison.OrdinalIgnoreCase) && edge.Type == RoadType.Pedestrian)
                     continue;
 
                 var neighborId = (edge.StartNodeId == currentId) ? edge.EndNodeId : edge.StartNodeId;
