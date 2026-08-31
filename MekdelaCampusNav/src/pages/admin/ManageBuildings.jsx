@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { Plus, Edit, Trash2, X, Upload } from 'lucide-react';
 
+const getCampusId = (c) => c?.id ?? c?.Id;
+const getCampusName = (c) => c?.name ?? c?.Name ?? "Unknown Campus";
+
+const getBuildingId = (b) => b?.id ?? b?.Id;
+const getBuildingName = (b) => b?.name ?? b?.Name ?? "Unknown Building";
+const getBuildingCampusId = (b) => b?.campusId ?? b?.CampusId;
+
 const ManageBuildings = () => {
   const [campuses, setCampuses] = useState([]);
   const [buildings, setBuildings] = useState([]);
@@ -40,9 +47,23 @@ const ManageBuildings = () => {
     <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-700 italic font-bold">
       <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 text-[#00204E] font-black uppercase">
         <label className="text-[10px] text-[#C4A006] uppercase mb-4 block tracking-widest">Step 1: Choose Campus</label>
-        <select className="w-full p-4 bg-gray-50 rounded-2xl font-black border-none shadow-inner" value={selectedCampusId} onChange={(e) => setSelectedCampusId(e.target.value)}>
-          <option value="">-- Choose Campus --</option>{campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <select
+  className="w-full p-4 bg-gray-50 rounded-2xl font-black border-none shadow-inner"
+  value={selectedCampusId}
+  onChange={(e) => setSelectedCampusId(e.target.value)}
+>
+  <option value="">-- Choose Campus --</option>
+
+  {campuses.map(c => {
+    const id = getCampusId(c);
+
+    return (
+      <option key={id} value={id}>
+        {getCampusName(c)}
+      </option>
+    );
+  })}
+</select>
       </div>
 
       {selectedCampusId && (
@@ -54,12 +75,31 @@ const ManageBuildings = () => {
           <table className="w-full text-left font-black">
             <thead className="bg-gray-50 text-gray-400 text-[10px] uppercase"><tr><th className="p-8">ID</th><th className="p-8">Building Name</th><th className="p-8 text-center">Actions</th></tr></thead>
             <tbody className="divide-y divide-gray-50">
-              {buildings.filter(b => b.campusId == selectedCampusId).map(b => (
-                <tr key={b.id} className="hover:bg-blue-50/20 group">
-                  <td className="p-8 text-[#C4A006]">#{b.id}</td><td className="p-8">{b.name}</td>
+              {buildings
+  .filter(
+    b => String(getBuildingCampusId(b)) === String(selectedCampusId)
+  )
+  .map(b => (
+                <tr key={getBuildingId(b)} className="hover:bg-blue-50/20 group">
+  <td className="p-8 text-[#C4A006]">#{getBuildingId(b)}</td>
+  <td className="p-8">{getBuildingName(b)}</td>
                   <td className="p-8 text-center flex justify-center gap-4">
-                    <button onClick={() => {setFormData(b); setIsEdit(true); setShowModal(true);}} className="p-3 text-blue-600 bg-blue-50 rounded-2xl"><Edit size={18}/></button>
-                    <button onClick={async () => { if(window.confirm("Delete?")) { await api.delete(`/Buildings/${b.id}`); fetchData(); } }} className="p-3 text-red-500 bg-red-50 rounded-2xl"><Trash2 size={18}/></button>
+                   <button
+  onClick={() => {
+    setFormData({
+      ...b,
+      id: getBuildingId(b),
+      name: getBuildingName(b),
+      campusId: getBuildingCampusId(b)
+    });
+    setIsEdit(true);
+    setShowModal(true);
+  }}
+  className="p-3 text-blue-600 bg-blue-50 rounded-2xl"
+>
+  <Edit size={18}/>
+</button>
+                    <button onClick={async () => { if(window.confirm("Delete?")) { await api.delete(`/Buildings/${getBuildingId(b)}`); fetchData(); } }} className="p-3 text-red-500 bg-red-50 rounded-2xl"><Trash2 size={18}/></button>
                   </td>
                 </tr>))}</tbody>
           </table>

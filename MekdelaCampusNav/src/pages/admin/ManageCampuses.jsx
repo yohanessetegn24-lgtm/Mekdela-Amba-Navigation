@@ -2,13 +2,30 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { Plus, Edit, Trash2, X, Upload } from 'lucide-react';
 
+const getCampusId = (c) => c?.Id ?? c?.id;
+const getCampusName = (c) => c?.Name ?? c?.name ?? "";
+const getCampusDescription = (c) => c?.Description ?? c?.description ?? "";
+const getCampusImage = (c) => c?.ImageUrl ?? c?.imageUrl ?? "";
+const getCampusLat = (c) => c?.Latitude ?? c?.latitude;
+const getCampusLng = (c) => c?.Longitude ?? c?.longitude;
+
 const ManageCampuses = () => {
   const [campuses, setCampuses] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({});
   const [isEdit, setIsEdit] = useState(false);
 
-  const fetchCampuses = async () => { try { const res = await api.get('/Campuses'); setCampuses(res.data); } catch(e){} };
+  const fetchCampuses = async () => {
+  try {
+    const res = await api.get('/Campuses');
+
+    console.log("CAMPUSES FROM API:", res.data);
+
+    setCampuses(res.data);
+  } catch (e) {
+    console.error("Failed to fetch campuses:", e);
+  }
+};
   useEffect(() => { fetchCampuses(); }, []);
 
   const handleFileUpload = (e) => {
@@ -39,15 +56,72 @@ const ManageCampuses = () => {
         <thead className="bg-gray-50 text-gray-400 text-[10px] uppercase italic tracking-widest">
           <tr><th className="p-8">ID</th><th className="p-8">Name</th><th className="p-8 text-center">Location</th><th className="p-8 text-center">Actions</th></tr>
         </thead>
-        <tbody className="divide-y divide-gray-50">{campuses.map(c => (
-          <tr key={c.id} className="hover:bg-blue-50/20 transition group">
-            <td className="p-8 text-[#C4A006]">#{c.id}</td><td className="p-8">{c.name}</td>
-            <td className="p-8 text-center font-mono text-xs">{c.latitude?.toFixed(4)}, {c.longitude?.toFixed(4)}</td>
-            <td className="p-8 text-center flex justify-center gap-4">
-              <button onClick={() => {setFormData(c); setIsEdit(true); setShowModal(true);}} className="p-3 text-blue-600 bg-blue-50 rounded-2xl"><Edit size={18}/></button>
-              <button onClick={async () => { if(window.confirm("እርግጠኛ ነህ?")) { await api.delete(`/Campuses/${c.id}`); fetchCampuses(); } }} className="p-3 text-red-500 bg-red-50 rounded-2xl"><Trash2 size={18}/></button>
-            </td>
-          </tr>))}</tbody>
+        <tbody className="divide-y divide-gray-50">{campuses.map(c => {
+
+  const id = getCampusId(c);
+  const name = getCampusName(c);
+  const lat = getCampusLat(c);
+  const lng = getCampusLng(c);
+
+  return (
+    <tr
+      key={id}
+      className="hover:bg-blue-50/20 transition group"
+    >
+
+      <td className="p-8 text-[#C4A006]">
+        #{id}
+      </td>
+
+      <td className="p-8">
+        {name}
+      </td>
+
+      <td className="p-8 text-center font-mono text-xs">
+        {lat != null && lng != null
+          ? `${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}`
+          : "No Location"
+        }
+      </td>
+
+      <td className="p-8 text-center flex justify-center gap-4">
+
+        <button
+          onClick={() => {
+            setFormData({
+              Id: id,
+              Name: name,
+              Description: getCampusDescription(c),
+              ImageUrl: getCampusImage(c),
+              Latitude: lat,
+              Longitude: lng
+            });
+
+            setIsEdit(true);
+            setShowModal(true);
+          }}
+          className="p-3 text-blue-600 bg-blue-50 rounded-2xl"
+        >
+          <Edit size={18}/>
+        </button>
+
+        <button
+          onClick={async () => {
+            if (window.confirm("እርግጠኛ ነህ?")) {
+              await api.delete(`/Campuses/${id}`);
+              fetchCampuses();
+            }
+          }}
+          className="p-3 text-red-500 bg-red-50 rounded-2xl"
+        >
+          <Trash2 size={18}/>
+        </button>
+
+      </td>
+
+    </tr>
+  );
+})}</tbody>
       </table>
 
       {showModal && (

@@ -16,19 +16,27 @@ public class BuildingService : IBuildingService
 
     public async Task<List<Building>> GetAllBuildingsAsync()
     {
-        return await _context.Buildings.Include(b => b.Campus).ToListAsync();
+        // ቢሮዎችን (Offices) ጨምሮ ያመጣል
+        return await _context.Buildings
+            .Include(b => b.Campus)
+            .Include(b => b.Offices) 
+            .ToListAsync();
     }
 
     public async Task<List<Building>> GetBuildingsByCampusIdAsync(int campusId)
     {
+        // ለ React Map Suggestion ወሳኙ ክፍል ይህ ነው
         return await _context.Buildings
+            .Include(b => b.Offices) 
             .Where(b => b.CampusId == campusId)
             .ToListAsync();
     }
 
     public async Task<Building> GetBuildingByIdAsync(int id)
     {
-        return await _context.Buildings.Include(b => b.Campus)
+        return await _context.Buildings
+            .Include(b => b.Campus)
+            .Include(b => b.Offices) 
             .FirstOrDefaultAsync(b => b.Id == id);
     }
 

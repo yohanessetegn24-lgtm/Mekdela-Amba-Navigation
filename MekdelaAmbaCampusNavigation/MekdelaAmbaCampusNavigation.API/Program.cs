@@ -56,7 +56,7 @@ if (app.Environment.IsDevelopment())
 
 // 🚀 የ Middleware ቅደም ተከተል ማስተካከያ
 app.UseHttpsRedirection(); // መጀመሪያ HTTPS ይሁን
-
+app.UseRouting();
 app.UseCors("AllowReactApp"); // ከዚያ CORS ይፈቀድ
 
 app.UseAuthorization();

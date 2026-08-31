@@ -41,17 +41,35 @@ const ManageAdmins = () => {
           <tr><th className="p-10">ID</th><th className="p-10">STATUS</th><th className="p-10">FULL NAME</th><th className="p-10">EMAIL</th><th className="p-10 text-center">MANAGE</th></tr>
         </thead>
         <tbody className="divide-y divide-gray-50">
-          {systemUsers.map(u => (
-            <tr key={u.id} className="hover:bg-blue-50/10 transition italic">
-              <td className="p-10 text-[#C4A006]">#{u.id}</td>
-              <td className="p-10">{u.isActive ? <span className="text-green-500 text-[10px] flex items-center gap-2 font-black"><ShieldCheck size={16}/> VERIFIED</span> : <button onClick={() => {setVerifyingEmail(u.email); setShowVerifyModal(true);}} className="text-red-500 text-[10px] underline flex items-center gap-2 animate-pulse font-black"><AlertCircle size={16}/> NEEDS VERIFICATION</button>}</td>
-              <td className="p-10">{u.fullName}</td>
-              <td className="p-10 lowercase font-medium text-blue-600 text-sm italic">{u.email}</td>
-              <td className="p-10 text-center flex justify-center gap-4">
-                <button className="p-3 text-blue-600 bg-blue-50 rounded-2xl hover:scale-110 transition"><Edit size={20}/></button>
-                <button onClick={async () => { if(window.confirm("Delete?")) { await api.delete(`/Users/${u.id}`); fetchData(); } }} className="p-3 text-red-500 bg-red-50 rounded-2xl hover:scale-110 transition"><Trash2 size={20}/></button>
-              </td>
-            </tr>))}</tbody>
+          {systemUsers.map((u, index) => {
+            // 🚀 ባክኤንድ በትልቅ (Id, IsActive, FullName, Email) ቢልክም እንዲሰራ መከላከያ
+            const uId = u.id || u.Id;
+            const uIsActive = u.isActive || u.IsActive;
+            const uFullName = u.fullName || u.FullName || u.name || u.Name;
+            const uEmail = u.email || u.Email;
+
+            return (
+              <tr key={uId || index} className="hover:bg-blue-50/10 transition italic">
+                <td className="p-10 text-[#C4A006]">#{uId}</td>
+                <td className="p-10">
+                  {uIsActive ? (
+                    <span className="text-green-500 text-[10px] flex items-center gap-2 font-black"><ShieldCheck size={16}/> VERIFIED</span>
+                  ) : (
+                    <button onClick={() => {setVerifyingEmail(uEmail); setShowVerifyModal(true);}} className="text-red-500 text-[10px] underline flex items-center gap-2 animate-pulse font-black">
+                      <AlertCircle size={16}/> NEEDS VERIFICATION
+                    </button>
+                  )}
+                </td>
+                <td className="p-10">{uFullName || "N/A"}</td>
+                <td className="p-10 lowercase font-medium text-blue-600 text-sm italic">{uEmail || "N/A"}</td>
+                <td className="p-10 text-center flex justify-center gap-4">
+                  <button className="p-3 text-blue-600 bg-blue-50 rounded-2xl hover:scale-110 transition"><Edit size={20}/></button>
+                  <button onClick={async () => { if(window.confirm("Delete?")) { await api.delete(`/Users/${uId}`); fetchData(); } }} className="p-3 text-red-500 bg-red-50 rounded-2xl hover:scale-110 transition"><Trash2 size={20}/></button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
       </table>
 
       {showModal && (

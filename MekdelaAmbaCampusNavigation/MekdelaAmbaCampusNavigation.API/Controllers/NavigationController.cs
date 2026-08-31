@@ -9,7 +9,7 @@ namespace MekdelaAmbaCampusNavigation.API.Controllers;
 public class NavigationController : ControllerBase
 {
     private readonly RoutingService _routingService;
-    private readonly ILogger<NavigationController> _logger; // ለስህተት መከታተያ (Logging)
+    private readonly ILogger<NavigationController> _logger;
 
     public NavigationController(RoutingService routingService, ILogger<NavigationController> logger)
     {
@@ -21,38 +21,39 @@ public class NavigationController : ControllerBase
     [HttpPost("calculate")]
     public async Task<IActionResult> CalculateRoute([FromBody] CalculateRouteRequestDto request)
     {
-        // 1. መሠረታዊ ፍተሻ (Validation)
         if (request == null)
-            return BadRequest(new { message = "Invalid request payload." });
+            return BadRequest(new { message = "የተሳሳተ መረጃ ተልኳል።" });
 
         if (request.DestinationBuildingId <= 0)
             return BadRequest(new { message = "እባክዎ መድረሻ ህንጻ ይምረጡ!" });
 
-        // GPS መረጃው በትክክል መምጣቱን ማረጋገጥ
         if (request.StartLatitude == 0 || request.StartLongitude == 0)
             return BadRequest(new { message = "የእርስዎ GPS ቦታ አልታወቀም። እባክዎ Location ያብሩ!" });
 
         try
         {
-            // 2. መንገዱን ማስላት
+            _logger.LogInformation("Calculating route for Building {Id} from ({Lat}, {Lng})", 
+                request.DestinationBuildingId, request.StartLatitude, request.StartLongitude);
+
             var result = await _routingService.CalculateRoute(request);
 
-            // 3. ውጤቱን መፈተሽ
-            if (result == null || result.Path == null || !result.Path.Any())
+            // ⚠️ ዋናው ችግር እዚህ ጋር ነው፡ ውጤቱ null ከሆነ ሪአክት መስመር አይስልም
+            if (result == null || result.Path == null || result.Path.Count == 0)
             {
-                return NotFound(new { 
-                    message = "ይቅርታ፣ ከመነሻዎ ወደተመረጠው ህንጻ የሚያደርስ የመንገድ ትስስር በዳታቤዝ ውስጥ አልተገኘም!" 
+                // በ 404 ፋንታ በ 200 (Ok) ግን ባዶ መልዕክት መላክ ይሻላል (ለሪአክት እንዲመቸው)
+                return Ok(new { 
+                    success = false,
+                    message = "ይቅርታ፣ ከመነሻዎ ወደተመረጠው ህንጻ የሚያደርስ የመንገድ ትስስር አልተገኘም! እባክዎ በ Road Designer መንገዶቹን ያገናኙ።" 
                 });
             }
 
-            // 4. የተሳካ ውጤት መመለስ
+            // ውጤቱ ከተገኘ success flag ጨምረን እንላካለን
             return Ok(result);
         }
         catch (Exception ex)
         {
-            // ስህተት ካለ በLog መያዝ (ለዲባግ ይረዳል)
             _logger.LogError(ex, "Error occurred while calculating route");
-            return StatusCode(500, new { message = "በሰርቨር በኩል ችግር ተፈጥሯል፣ እባክዎ ቆይተው ይሞክሩ።" });
+            return StatusCode(500, new { message = "በሰርቨር በኩል ስህተት ተፈጥሯል፡ " + ex.Message });
         }
     }
 }

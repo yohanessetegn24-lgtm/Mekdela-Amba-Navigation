@@ -14,7 +14,7 @@ public class RoadsController : ControllerBase
     private readonly ApplicationDbContext _context;
     public RoadsController(ApplicationDbContext context) => _context = context;
 
-    // 1. 🚀 ሁሉንም የመንገድ መረብ ዳታ ማምጫ
+    // 1. 🚀 ሁሉንም የመንገድ መረብ ዳታ ማምጫ (ያልተነካ)
     [HttpGet("network/{campusId}")]
     public async Task<IActionResult> GetNetwork(int campusId)
     {
@@ -27,7 +27,7 @@ public class RoadsController : ControllerBase
         return Ok(nodes);
     }
 
-    // 2. 🛠️ የመንገድ መረብን መመዝገቢያ
+    // 2. 🛠️ የመንገድ መረብን መመዝገቢያ (UPDATED for Phase 1)
     [HttpPost("save-network")]
     public async Task<IActionResult> SaveNetwork([FromBody] RoadNetworkDto networkDto)
     {
@@ -37,58 +37,94 @@ public class RoadsController : ControllerBase
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var createdNodes = new List<MapNode>();
+            // የካምፓሱን ነባር ኖዶች መጫን (ለማነጻጸር)
+            var existingCampusNodes = await _context.MapNodes
+                .Where(n => n.CampusId == networkDto.CampusId)
+                .ToListAsync();
+
+            var resolvedNodeIds = new List<int>();
+
+            // ኖዶችን የማጣራት እና የመመዝገብ ሂደት
             foreach (var nodeDto in networkDto.Nodes)
             {
-                var node = new MapNode
+                // በ 0.5 ሜትር ክልል ውስጥ ተመሳሳይ ኖድ ካለ እሱን ይጠቀማል (Node Reuse)
+                var existingNode = existingCampusNodes.FirstOrDefault(n => 
+                    CalculateHaversineRaw(n.Latitude, n.Longitude, nodeDto.Latitude, nodeDto.Longitude) < 0.5);
+
+                if (existingNode != null)
                 {
-                    Latitude = nodeDto.Latitude,
-                    Longitude = nodeDto.Longitude,
-                    CampusId = networkDto.CampusId,
-                    Name = "Road Node"
-                };
-                _context.MapNodes.Add(node);
-                createdNodes.Add(node);
+                    resolvedNodeIds.Add(existingNode.Id);
+                }
+                else
+                {
+                    var newNode = new MapNode
+                    {
+                        Latitude = nodeDto.Latitude,
+                        Longitude = nodeDto.Longitude,
+                        CampusId = networkDto.CampusId,
+                        Name = "Road Node"
+                    };
+                    _context.MapNodes.Add(newNode);
+                    await _context.SaveChangesAsync(); // ID እንዲወጣለት
+                    
+                    resolvedNodeIds.Add(newNode.Id);
+                    existingCampusNodes.Add(newNode); // ለቀጣይ loop እንዲያገኘው
+                }
             }
-            await _context.SaveChangesAsync();
 
-            for (int i = 0; i < createdNodes.Count - 1; i++)
+            // በመካከላቸው Edge መፍጠር
+            for (int i = 0; i < resolvedNodeIds.Count - 1; i++)
             {
-                var nodeA = createdNodes[i];
-                var nodeB = createdNodes[i + 1];
-                var dist = CalculateHaversine(nodeA, nodeB);
+                int startId = resolvedNodeIds[i];
+                int endId = resolvedNodeIds[i + 1];
 
-                var edgeForward = new MapEdge 
-                { 
-                    StartNodeId = nodeA.Id, 
-                    EndNodeId = nodeB.Id, 
-                    Distance = dist,
-                    RoadName = networkDto.RoadName ?? "Internal Campus Road",
-                    RoadCode = networkDto.RoadCode ?? $"R-{new Random().Next(100, 999)}",
-                    Status = networkDto.Status,
-                    Type = networkDto.Type      
-                };
+                // ርቀቱ 0 ከሆነ (ተመሳሳይ ነጥብ) መንገድ አይፈጠርም (Zero-distance Guard)
+                if (startId == endId) continue;
 
-                var edgeBackward = new MapEdge 
-                { 
-                    StartNodeId = nodeB.Id, 
-                    EndNodeId = nodeA.Id, 
-                    Distance = dist,
-                    RoadName = edgeForward.RoadName,
-                    RoadCode = edgeForward.RoadCode,
-                    Status = edgeForward.Status,
-                    Type = edgeForward.Type
-                };
+                // መንገዱ ቀድሞ ካለ በድጋሚ እንዳይፈጠር ቼክ እናደርጋለን
+                var edgeExists = await _context.MapEdges.AnyAsync(e => 
+                    (e.StartNodeId == startId && e.EndNodeId == endId) || 
+                    (e.StartNodeId == endId && e.EndNodeId == startId));
 
-                _context.MapEdges.Add(edgeForward);
-                _context.MapEdges.Add(edgeBackward);
+                if (!edgeExists)
+                {
+                    var nodeA = existingCampusNodes.First(n => n.Id == startId);
+                    var nodeB = existingCampusNodes.First(n => n.Id == endId);
+                    var dist = CalculateHaversineRaw(nodeA.Latitude, nodeA.Longitude, nodeB.Latitude, nodeB.Longitude);
+
+                    var edgeForward = new MapEdge 
+                    { 
+                        StartNodeId = startId, 
+                        EndNodeId = endId, 
+                        Distance = dist,
+                        RoadName = networkDto.RoadName ?? "Internal Campus Road",
+                        RoadCode = networkDto.RoadCode ?? $"R-{new Random().Next(100, 999)}",
+                        Status = networkDto.Status,
+                        Type = networkDto.Type,
+                        TrafficFactor = 1.0      
+                    };
+
+                    var edgeBackward = new MapEdge 
+                    { 
+                        StartNodeId = endId, 
+                        EndNodeId = startId, 
+                        Distance = dist,
+                        RoadName = edgeForward.RoadName,
+                        RoadCode = edgeForward.RoadCode,
+                        Status = edgeForward.Status,
+                        Type = edgeForward.Type,
+                        TrafficFactor = 1.0
+                    };
+
+                    _context.MapEdges.Add(edgeForward);
+                    _context.MapEdges.Add(edgeBackward);
+                }
             }
 
-            await AutoLinkIntersections(createdNodes);
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return Ok(new { message = "የመንገድ መረብ በስኬት ተመዝግቧል! 🚀", nodesCount = createdNodes.Count });
+            return Ok(new { message = "የመንገድ መረብ በስኬት ተመዝግቧል! 🚀" });
         }
         catch (Exception ex)
         {
@@ -97,7 +133,7 @@ public class RoadsController : ControllerBase
         }
     }
 
-    // 3. 🔴 የመንገድ ሁኔታን መለወጫ
+    // 3. 🔴 የመንገድ ሁኔታን መለወጫ (ያልተነካ)
     [HttpPut("update-status/{edgeId}")]
     public async Task<IActionResult> UpdateStatus(int edgeId, [FromBody] RoadStatus status)
     {
@@ -115,8 +151,7 @@ public class RoadsController : ControllerBase
         return Ok(new { message = $"የመንገዱ ሁኔታ ወደ {status} ተቀይሯል!" });
     }
 
-    // 4. 📝 የመንገድ መረጃዎችን ማስተካከያ (Edit Road)
-    // 🚀 ለውጥ፦ 405 ስህተትን ለመከላከል ስሙ 'update-segment' ሆኗል
+    // 4. 📝 የመንገድ መረጃዎችን ማስተካከያ (ያልተነካ)
     [HttpPost("update-segment/{edgeId}")] 
     public async Task<IActionResult> EditRoadSegment(int edgeId, [FromBody] RoadUpdateDto updateDto)
     {
@@ -125,13 +160,11 @@ public class RoadsController : ControllerBase
         var edge = await _context.MapEdges.FindAsync(edgeId);
         if (edge == null) return NotFound(new { message = "መንገዱ አልተገኘም!" });
 
-        // ዋናውን መንገድ ማዘመን
         edge.RoadName = updateDto.RoadName;
         edge.Status = updateDto.Status;
         edge.Type = updateDto.RoadType; 
         edge.UpdatedAt = DateTime.UtcNow;
 
-        // 🚀 አብሮት ያለውን ተመላላሽ መንገድ (Backward Edge) አብሮ ማዘመን
         var reverseEdge = await _context.MapEdges
             .FirstOrDefaultAsync(e => e.StartNodeId == edge.EndNodeId && e.EndNodeId == edge.StartNodeId);
         
@@ -147,7 +180,7 @@ public class RoadsController : ControllerBase
         return Ok(new { message = "የመንገዱ መረጃ በስኬት ተዘምኗል! ✅" });
     }
 
-    // 5. 🗑️ አንድን የመንገድ segment ማጥፋት
+    // 5. 🗑️ አንድን የመንገድ segment ማጥፋት (ያልተነካ)
     [HttpDelete("segment/{edgeId}")]
     public async Task<IActionResult> DeleteSegment(int edgeId)
     {
@@ -164,22 +197,7 @@ public class RoadsController : ControllerBase
         return Ok(new { message = "የመንገዱ ክፍል ተሰርዟል።" });
     }
 
-    private async Task AutoLinkIntersections(List<MapNode> newNodes)
-    {
-        for (int i = 0; i < newNodes.Count; i++)
-        {
-            for (int j = i + 1; j < newNodes.Count; j++)
-            {
-                var d = CalculateHaversine(newNodes[i], newNodes[j]);
-                if (d < 1.5)
-                {
-                    _context.MapEdges.Add(new MapEdge { StartNodeId = newNodes[i].Id, EndNodeId = newNodes[j].Id, Distance = d });
-                    _context.MapEdges.Add(new MapEdge { StartNodeId = newNodes[j].Id, EndNodeId = newNodes[i].Id, Distance = d });
-                }
-            }
-        }
-    }
-
+    // 6. 🧹 ካምፓስን የማጽዳት ስራ
     [HttpDelete("clear-network/{campusId}")]
     public async Task<IActionResult> ClearNetwork(int campusId)
     {
@@ -193,20 +211,19 @@ public class RoadsController : ControllerBase
         return Ok(new { message = "የካምፓሱ መንገዶች በሙሉ ተሰርዘዋል።" });
     }
 
-    private double CalculateHaversine(MapNode n1, MapNode n2)
+    // 📐 የርቀት ማስያ Helper (Raw coordinates version)
+    private double CalculateHaversineRaw(double lat1, double lon1, double lat2, double lon2)
     {
         var R = 6371000; 
-        var dLat = (n2.Latitude - n1.Latitude) * Math.PI / 180;
-        var dLon = (n2.Longitude - n1.Longitude) * Math.PI / 180;
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLon = (lon2 - lon1) * Math.PI / 180;
         var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                Math.Cos(n1.Latitude * Math.PI / 180) * Math.Cos(n2.Latitude * Math.PI / 180) *
+                Math.Cos(lat1 * Math.PI / 180) * Math.Cos(lat2 * Math.PI / 180) *
                 Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-        return R * c;
+        return R * 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
     }
 }
 
-// 🚀 ለዝመና የሚያገለግል DTO (ሁልጊዜ ከ Controller ውጭ ወይም በተለየ ፋይል ቢቀመጥ ይመረጣል)
 public class RoadUpdateDto
 {
     public string RoadName { get; set; }
