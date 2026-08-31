@@ -58,7 +58,7 @@ const MapPage = () => {
   const [showOffRoutePrompt, setShowOffRoutePrompt] = useState(false);
   const [navigationInstruction, setNavigationInstruction] = useState(null);
   const hasRejectedRecalculation = useRef(false);
-
+ 
   // UI Toggles
   const [showDirectionsMenu, setShowDirectionsMenu] = useState(false);
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
@@ -465,7 +465,7 @@ const updateRouteLive = useCallback(async (currentLat, currentLng, targetBuildin
                    <button onClick={() => userPos && setMapCenter(userPos)} className="flex items-center gap-4 bg-[#004d40] text-white px-10 py-3 rounded-full text-xs font-black uppercase shadow-xl active:scale-95"><Compass size={20}/> My Location</button>
                    <button onClick={() => setShowDirectionsMenu(!showDirectionsMenu)} className="flex items-center gap-4 text-white px-8 py-3 rounded-full text-xs font-black uppercase hover:bg-white/10 transition-all"><Navigation size={20} className="rotate-45"/> Directions</button>
                    <button onClick={toggleNearby} className={`flex items-center gap-4 px-8 py-3 rounded-full text-xs font-black uppercase transition-all ${showNearbyOnly ? 'bg-[#fbc02d] text-[#002e31] shadow-xl' : 'text-white hover:bg-white/10'}`}><MapPin size={20}/> Nearby</button>
-                   <button onClick={() => setShowCampusOverlay(true)} className="flex items-center gap-4 text-white px-8 py-3 rounded-full text-xs font-black uppercase hover:bg-white/10 transition-all"><School size={20}/> Campuses</button>
+                   <button onClick={() => navigate('/campuses')} className="flex items-center gap-4 text-white px-8 py-3 rounded-full text-xs font-black uppercase hover:bg-white/10 transition-all"><School size={20}/> Campuses</button>
                    <button onClick={() => window.print()} className="flex items-center gap-4 text-white px-8 py-3 rounded-full text-xs font-black uppercase hover:bg-white/10 transition-all"><Printer size={20}/> Print</button>
                 </div>
 
@@ -508,24 +508,7 @@ const updateRouteLive = useCallback(async (currentLat, currentLng, targetBuildin
          <p className="text-[10px] font-black tracking-[15px] text-white/10 text-center uppercase italic border-t border-white/5 pt-12">© {new Date().getFullYear()} MEKDELA AMBA UNIVERSITY. DEVELOPED BY YGSH</p>
       </footer>
 
-      {/* 🚀 Switch Campus Overlay */}
-      {showCampusOverlay && (
-        <div className="fixed inset-0 z-[3000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-12 no-print">
-           <div className="bg-[#002e31] w-full max-w-4xl rounded-[60px] shadow-3xl p-16 relative animate-in zoom-in duration-500 border border-white/10">
-              <button onClick={() => setShowCampusOverlay(false)} className="absolute top-10 right-10 text-white/40 hover:text-red-500 transition-colors"><X size={60}/></button>
-              <div className="text-center mb-20 text-white"><h2 className="text-7xl font-black italic uppercase tracking-tighter">Switch Campus</h2><div className="h-2 w-56 bg-[#fbc02d] mx-auto mt-6 rounded-full shadow-2xl"></div></div>
-              <div className="grid md:grid-cols-2 gap-12">
-                 {[{ id: 1, name: 'Tulu Awulia', img: tuluImg }, { id: 2, name: 'Mekane Selam', img: mekaneImg }].map(c => (
-                   <div key={c.id} className="group bg-white rounded-[50px] overflow-hidden shadow-3xl transition-all duration-700">
-                      <div className="h-56 relative overflow-hidden"><img src={c.img} className="w-full h-full object-cover transition duration-1000 group-hover:scale-110" alt={c.name} /><div className="absolute inset-0 bg-gradient-to-t from-[#002e31] via-transparent to-transparent"></div><div className="absolute bottom-6 left-10 text-white"><h3 className="text-3xl font-black italic uppercase tracking-tighter">{c.name}</h3></div></div>
-                      <div className="p-10 text-center"><button onClick={() => { setShowCampusOverlay(false); navigate(`/map/${c.id}`); window.location.reload(); }} className="w-full bg-[#006064] text-white py-6 rounded-[35px] font-black text-xl uppercase shadow-2xl">Enter Map</button></div>
-                   </div>
-                 ))}
-              </div>
-           </div>
-        </div>
-      )}
-
+      
       <style dangerouslySetInnerHTML={{ __html: `
         .leaflet-container { z-index: 1 !important; cursor: crosshair; border-radius: 0 !important; }
         .custom-popup .leaflet-popup-content-wrapper { border-radius: 50px; padding: 15px; border: 5px solid #002e31; box-shadow: 0 50px 100px rgba(0,0,0,0.4); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); }
