@@ -60,7 +60,11 @@ app.UseRouting();
 app.UseCors("AllowReactApp"); // ከዚያ CORS ይፈቀድ
 
 app.UseAuthorization();
-
+app.MapGet("/", () => new
+{
+    message = "Mekdela Amba Campus Navigation API is running successfully!",
+    status = "Online"
+});
 app.MapControllers();
 
 app.Run();
