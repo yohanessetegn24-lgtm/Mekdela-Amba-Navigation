@@ -15,4 +15,4 @@ WORKDIR /app
 COPY --from=build-env /app/out .
 
 # የፕሮጀክትህን ስም እዚህ ጋር ተካ (ለምሳሌ MyApi.dll)
-ENTRYPOINT ["dotnet", "MekdelaAmbaUniversityMap.dll"]
+ENTRYPOINT ["dotnet", "MekdelaAmbaCampusNavigation.API.dll"]
