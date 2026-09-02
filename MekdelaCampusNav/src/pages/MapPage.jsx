@@ -133,7 +133,7 @@ const updateRouteLive = useCallback(async (currentLat, currentLng, targetBuildin
     // 🚀 [መፍትሄ] - 5 ሰከንድ ካልሞላ ወይም ተማሪው ከ 10 ሜትር በላይ ካልተንቀሳቀሰ ጥያቄ አትላክ
     const distMoved = lastUpdatePos.current ? L.latLng(newPos).distanceTo(L.latLng(lastUpdatePos.current)) : 999;
     
-    if (now - lastUpdateTime.current < 5000 && distMoved < 10) {
+    if (now - lastUpdateTime.current < 60000 && distMoved < 15) {
         return; 
     }
 
@@ -188,7 +188,7 @@ const updateRouteLive = useCallback(async (currentLat, currentLng, targetBuildin
             if (isNavigating && selectedBuilding) {
                 if (routePath.length > 0) {
                     const minDist = Math.min(...routePath.map(p => L.latLng(newPos).distanceTo(L.latLng(p))));
-                    if (minDist > 25 && !showOffRoutePrompt && !hasRejectedRecalculation.current) {
+                    if (minDist > 30 && !showOffRoutePrompt && !hasRejectedRecalculation.current) {
                         setShowOffRoutePrompt(true);
                     } else {
                         updateRouteLive(pos.coords.latitude, pos.coords.longitude, selectedBuilding);
