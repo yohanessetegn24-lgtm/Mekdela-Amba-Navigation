@@ -75,7 +75,7 @@ const Dashboard = () => {
         </div>
         <div className="bg-white p-8 rounded-[35px] border-b-8 border-b-purple-500 shadow-xl transform hover:scale-105 transition-transform">
           <Users className="text-purple-500 mb-2" size={32}/><p className="text-gray-400 text-[10px] uppercase font-black">Active Users</p>
-          <p className="text-3xl font-black">1,420</p>
+          <p className="text-3xl font-black">{data.users.length}</p>
         </div>
       </div>
 
@@ -88,7 +88,7 @@ const Dashboard = () => {
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="name" hide />
               <Tooltip />
-              <Line type="monotone" dataKey="visits" stroke="#00204E" strokeWidth={4} dot={{r: 4, fill: '#C4A006'}} />
+              <Line type="monotone" dataKey="visits" stroke="#0ebd65" strokeWidth={4} dot={{r: 4, fill: '#06c465'}} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -99,7 +99,7 @@ const Dashboard = () => {
             <BarChart data={chartData}>
               <XAxis dataKey="name" hide />
               <Tooltip />
-              <Bar dataKey="count" fill="#00204E" radius={[10, 10, 0, 0]} />
+              <Bar dataKey="count" fill="#05bb6f" radius={[10, 10, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
