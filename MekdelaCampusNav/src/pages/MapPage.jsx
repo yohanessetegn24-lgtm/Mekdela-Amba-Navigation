@@ -95,7 +95,20 @@ const MapPage = () => {
     });
     return list;
   }, [buildings]);
+const getRouteArrowAngle = (route) => {
+  if (!route || route.length < 2) return 0;
 
+  const [prevLat, prevLng] = route[route.length - 2];
+  const [lastLat, lastLng] = route[route.length - 1];
+
+  const dy = lastLat - prevLat;
+  const dx = lastLng - prevLng;
+
+  // Leaflet map direction → degrees
+  const angle = Math.atan2(dx, dy) * (180 / Math.PI);
+
+  return angle;
+};
   // 🚀 [PHASE 4 HELPER] - አቅጣጫ መለኪያ
   const calculateInstruction = (path) => {
     if (!path || path.length < 2) return null;
@@ -130,7 +143,7 @@ const updateRouteLive = useCallback(async (currentLat, currentLng, targetBuildin
     const now = Date.now();
     const newPos = [currentLat, currentLng];
 
-    // 🚀 [መፍትሄ] - 5 ሰከንድ ካልሞላ ወይም ተማሪው ከ 10 ሜትር በላይ ካልተንቀሳቀሰ ጥያቄ አትላክ
+    // 🚀 [መፍትሄ] - 1minute ካልሞላ ወይም ተማሪው ከ 10 ሜትር በላይ ካልተንቀሳቀሰ ጥያቄ አትላክ
     const distMoved = lastUpdatePos.current ? L.latLng(newPos).distanceTo(L.latLng(lastUpdatePos.current)) : 999;
     
     if (now - lastUpdateTime.current < 60000 && distMoved < 15) {
@@ -449,7 +462,11 @@ const updateRouteLive = useCallback(async (currentLat, currentLng, targetBuildin
                         <Popup className="custom-popup"><div className="p-3 text-center space-y-4 text-[#006064]"><h4 className="font-black uppercase text-xs italic">{b.Name || b.name}</h4><button onClick={() => startNav(b)} className="bg-[#004d40] text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase">Navigate Here</button></div></Popup>
                     </Marker>
                   ))}
-                  {routePath.length > 1 && <Polyline positions={routePath} color="#00ffff" weight={10} opacity={0.8} dashArray="20, 20" lineCap="round" />}
+                 {routePath.length > 1 && (<>
+  <Polyline positions={routePath} color="#002e31" weight={7} opacity={0.9} lineCap="round" lineJoin="round" />
+  <Polyline positions={routePath} color="#00ffff" weight={4} opacity={1} lineCap="round" lineJoin="round" />
+  <Marker position={routePath[routePath.length - 1]} icon={L.divIcon({ className: "", html: `<div class="w-9 h-9 flex items-center justify-center text-cyan-400 text-3xl font-black drop-shadow-[0_0_5px_#002e31]" style="transform: rotate(${getRouteArrowAngle(routePath)}deg);">➤</div>`, iconSize: [26, 26], iconAnchor: [18, 18] })} />
+</>)}
                 </MapContainer>
 
                 <div className="absolute right-10 top-10 z-40 flex flex-col gap-5 no-print">
