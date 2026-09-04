@@ -34,7 +34,7 @@ const Login = () => {
     <div className="min-h-screen flex flex-col bg-white font-sans italic font-bold">
       
       {/* 1. Header - ከላይ */}
-      <Header />
+      <Header showLoginBtn={false} />
 
       {/* 2. Main Login Content - 'flex-1' ክፍት ቦታውን እንዲሞላ ያደርገዋል */}
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">

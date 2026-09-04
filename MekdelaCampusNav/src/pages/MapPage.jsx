@@ -452,7 +452,7 @@ const MapPage = () => {
       </div>
       <h3 className="text-lg md:text-2xl font-black text-[#002e31] uppercase mb-2 md:mb-3 italic">Off Route</h3>
       <p className="text-[10px] md:text-xs text-gray-500 font-bold mb-6 md:mb-10 italic px-2">
-        መንገዱን ስተዋል። አዲሱን መንገድ እናሰላልዎት?
+        መንገዱን ስተዋል። አዲሱን መንገድ ልሳለው?
       </p>
       <div className="flex gap-3 md:gap-4">
           <button 

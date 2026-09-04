@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { LogIn, Menu, X } from 'lucide-react';
 import mkaulogo from '../assets/mkaulogo.jpg';
 
-const Header = () => {
+// 🚀 { showLoginBtn = true } የሚለውን እዚህ ጋር ጨምረነዋል
+const Header = ({ showLoginBtn = true }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,6 +17,9 @@ const Header = () => {
     { name: 'Services', path: '/services' },
     { name: 'Contact', path: '/contact' },
   ];
+
+  // 🚀 ተጠቃሚው ቀጥታ በሊንኩ መግባቱን ለማረጋገጥ (ጥንቃቄ)
+  const isLoginPage = location.pathname === '/login';
 
   return (
     <nav className="w-full bg-white px-4 md:px-8 py-4 md:py-5 flex justify-between items-center shadow-sm sticky top-0 z-[1000] border-b border-gray-100 italic font-bold">
@@ -43,12 +47,16 @@ const Header = () => {
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
-        <button 
-          onClick={() => navigate('/login')}
-          className="bg-[#fbc02d] text-[#006064] px-4 md:px-8 py-2 md:py-3 rounded-full font-black uppercase text-[10px] md:text-xs flex items-center gap-2 hover:bg-[#f9a825] shadow-md transition-all"
-        >
-          <LogIn size={16} strokeWidth={3} /> <span className="hidden sm:inline">LOGIN</span>
-        </button>
+        {/* 🚀 እዚህ ጋር ነው ማስተካከያው የተደረገው */}
+        {/* ገጹ ሎጊን ካልሆነ እና showLoginBtn እውነት ከሆነ ብቻ በተኑ ይታያል */}
+        {!isLoginPage && showLoginBtn && (
+          <button 
+            onClick={() => navigate('/login')}
+            className="bg-[#fbc02d] text-[#006064] px-4 md:px-8 py-2 md:py-3 rounded-full font-black uppercase text-[10px] md:text-xs flex items-center gap-2 hover:bg-[#f9a825] shadow-md transition-all"
+          >
+            <LogIn size={16} strokeWidth={3} /> <span className="hidden sm:inline">LOGIN</span>
+          </button>
+        )}
         
         <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden p-2 text-[#006064]">
            {isMenuOpen ? <X size={28}/> : <Menu size={28}/>}
