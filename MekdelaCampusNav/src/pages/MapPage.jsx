@@ -203,22 +203,13 @@ const MapPage = () => {
     setShowOffRoutePrompt(false);
   };
 
-  const handleSelectItem = (item) => {
-      const lat = item.Latitude || item.latitude;
-      const lng = item.Longitude || item.longitude;
-      setMapCenter([lat, lng]);
-      setMapZoom(19);
-      setSearchTerm(""); 
-      if (item.type === 'office') {
-          setSelectedOffice(item);
-          setSelectedBuilding(item.parentBuilding);
-          setSearchMarkers([item.parentBuilding]);
-      } else {
-          setSelectedBuilding(item);
-          setSelectedOffice(null);
-          setSearchMarkers([item]);
-      }
-  };
+const handleSelectItem = (i) => {
+  const loc = [i.Latitude || i.latitude, i.Longitude || i.longitude];
+  setMapCenter(loc); if (window.innerWidth > 768) setMapZoom(19); // Desktop ላይ ብቻ ዙም ያደርጋል
+  setSearchTerm(""); 
+  if (i.type === 'office') { setSelectedOffice(i); setSelectedBuilding(i.parentBuilding); setSearchMarkers([i.parentBuilding]); } 
+  else { setSelectedBuilding(i); setSelectedOffice(null); setSearchMarkers([i]); }
+};
 
   const handleSearchButtonClick = () => {
     const found = searchableItems.find(i => i.searchName.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -296,6 +287,7 @@ const MapPage = () => {
                 <div className="w-1.5 h-1.5 md:w-2.5 md:h-2.5 bg-red-500 rounded-full shrink-0"></div>
                 <select 
                   className="flex-1 bg-transparent text-[10px] md:text-xs font-black text-[#006064] outline-none cursor-pointer" 
+                  value={selectedOffice?.Id || selectedOffice?.id || selectedBuilding?.Id || selectedBuilding?.id || ""} 
                   onChange={(e) => {
                     const item = searchableItems.find(x => (x.Id || x.id) == e.target.value);
                     if(item) handleSelectItem(item);
@@ -544,12 +536,12 @@ const MapPage = () => {
                     </Marker>
                   ))}
                  {routePath.length > 1 && (
-                  <>
-                    <Polyline positions={routePath} color="#002e31" weight={7} opacity={0.9} />
-                    <Polyline positions={routePath} color="#00ffff" weight={4} opacity={1} />
-                    <Marker position={routePath[routePath.length - 1]} icon={L.divIcon({ className: "", html: `<div class="text-cyan-400 text-3xl font-black" style="transform: rotate(${getRouteArrowAngle(routePath)}deg);">➤</div>`, iconSize: [26, 26], iconAnchor: [18, 18] })} />
-                  </>
-                 )}
+  <>
+    <Polyline positions={routePath} color="#002e31" weight={7} opacity={0.9} />
+    <Polyline positions={routePath} color="#00ffff" weight={4} opacity={1} />
+    <Marker position={routePath[routePath.length - 1]} icon={L.divIcon({ className: "", html: `<div style="width:20px;height:20px;background:white;border:8px solid black;border-radius:50%;box-shadow:0 0 10px rgba(0,0,0,0.5);"></div>`, iconSize: [20, 20], iconAnchor: [10, 10] })} />
+  </>
+)}
                 </MapContainer>
 
                 {/* Map Controls - Responsive Version */}
@@ -589,46 +581,46 @@ const MapPage = () => {
 
 </div>
 
-                {/* Bottom Quick Controls - Responsive Version */}
-<div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-40 w-[92%] sm:w-[85%] lg:w-full lg:max-w-[850px] bg-[#002e31]/95 backdrop-blur-3xl rounded-3xl md:rounded-full p-2 md:p-3 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex justify-between md:justify-around items-center no-print transition-all duration-300">
+             {/* Bottom Quick Controls - Responsive Version */}
+<div className="fixed bottom-4 md:bottom-10 left-1/2 -translate-x-1/2 z-[5005] w-[94%] sm:w-[85%] lg:w-full lg:max-w-[850px] bg-[#002e31]/95 backdrop-blur-3xl rounded-3xl md:rounded-full p-2 md:p-3 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex justify-between md:justify-around items-center no-print transition-all duration-300">
    
    <button 
      onClick={() => userPos && setMapCenter(userPos)} 
-     className="flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4 bg-[#004d40] text-white p-3 md:px-8 md:py-3 rounded-2xl md:rounded-full text-[9px] md:text-xs font-black uppercase shadow-xl hover:scale-105 active:scale-95 transition-all"
+     className="flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4 bg-[#004d40] text-white p-2.5 md:px-8 md:py-3 rounded-2xl md:rounded-full text-[9px] md:text-xs font-black uppercase shadow-xl hover:scale-105 active:scale-95 transition-all"
    >
-      <Compass size={22} className="shrink-0" />
+      <Compass size={20} className="md:w-[22px] md:h-[22px]" />
       <span className="hidden sm:inline">My Location</span>
    </button>
 
    <button 
      onClick={() => setShowDirectionsMenu(!showDirectionsMenu)} 
-     className="flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4 text-white p-3 md:px-8 md:py-3 rounded-2xl md:rounded-full text-[9px] md:text-xs font-black uppercase hover:bg-white/10 transition-all"
+     className="flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4 text-white p-2.5 md:px-8 md:py-3 rounded-2xl md:rounded-full text-[9px] md:text-xs font-black uppercase hover:bg-white/10 transition-all"
    >
-      <Navigation size={22} className="rotate-45 shrink-0" />
+      <Navigation size={20} className="rotate-45 md:w-[22px] md:h-[22px]" />
       <span className="hidden sm:inline">Directions</span>
    </button>
 
    <button 
      onClick={toggleNearby} 
-     className={`flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4 p-3 md:px-8 md:py-3 rounded-2xl md:rounded-full text-[9px] md:text-xs font-black uppercase transition-all ${showNearbyOnly ? 'bg-[#fbc02d] text-[#002e31] shadow-xl' : 'text-white hover:bg-white/10'}`}
+     className={`flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4 p-2.5 md:px-8 md:py-3 rounded-2xl md:rounded-full text-[9px] md:text-xs font-black uppercase transition-all ${showNearbyOnly ? 'bg-[#fbc02d] text-[#002e31] shadow-xl' : 'text-white hover:bg-white/10'}`}
    >
-      <MapPin size={22} className="shrink-0" />
+      <MapPin size={20} className="md:w-[22px] md:h-[22px]" />
       <span className="hidden sm:inline">Nearby</span>
    </button>
 
    <button 
      onClick={() => navigate('/campuses')} 
-     className="flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4 text-white p-3 md:px-8 md:py-3 rounded-2xl md:rounded-full text-[9px] md:text-xs font-black uppercase hover:bg-white/10 transition-all"
+     className="flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4 text-white p-2.5 md:px-8 md:py-3 rounded-2xl md:rounded-full text-[9px] md:text-xs font-black uppercase hover:bg-white/10 transition-all"
    >
-      <School size={22} className="shrink-0" />
+      <School size={20} className="md:w-[22px] md:h-[22px]" />
       <span className="hidden sm:inline">Campuses</span>
    </button>
 
    <button 
      onClick={() => window.print()} 
-     className="flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4 text-white p-3 md:px-8 md:py-3 rounded-2xl md:rounded-full text-[9px] md:text-xs font-black uppercase hover:bg-white/10 transition-all"
+     className="flex-1 md:flex-none flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4 text-white p-2.5 md:px-8 md:py-3 rounded-2xl md:rounded-full text-[9px] md:text-xs font-black uppercase hover:bg-white/10 transition-all"
    >
-      <Printer size={22} className="shrink-0" />
+      <Printer size={20} className="md:w-[22px] md:h-[22px]" />
       <span className="hidden sm:inline">Print</span>
    </button>
 
