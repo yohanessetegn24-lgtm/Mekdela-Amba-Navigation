@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://maumap.runasp.net/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://mekdela-amba-navigation.onrender.com/api',
 });
 
 export default api;
