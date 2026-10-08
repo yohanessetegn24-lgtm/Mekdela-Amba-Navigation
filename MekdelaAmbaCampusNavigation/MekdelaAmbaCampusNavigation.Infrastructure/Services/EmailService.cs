@@ -1,38 +1,54 @@
-﻿using MailKit.Net.Smtp;
-using MailKit.Security;
-using MimeKit;
-using MimeKit.Text;
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace MekdelaAmbaCampusNavigation.Infrastructure.Services;
 
 public class EmailService
 {
-    // ⚠️ ማሳሰቢያ፡ እዚህ ጋር ያንተን እውነተኛ Gmail እና App Password በኋላ እናስገባለን
-    private readonly string _fromEmail = "felegediget@gmail.com";
-    private readonly string _appPassword = "uoxucjbgshmzdhhp";
+    private readonly IConfiguration? _config;
+    private static readonly HttpClient _httpClient = new HttpClient();
+
+    // Default constructor (በቀጥታ አዲስ object ቢፈጠር እንዳይበላሽ)
+    public EmailService()
+    {
+    }
+
+    // Dependency Injection constructor (ከ appsettings.json እንዲያነብ)
+    public EmailService(IConfiguration config)
+    {
+        _config = config;
+    }
 
     public async Task<bool> SendEmailAsync(string toEmail, string subject, string body)
     {
         try
         {
-            var email = new MimeMessage();
-            email.From.Add(MailboxAddress.Parse(_fromEmail));
-            email.To.Add(MailboxAddress.Parse(toEmail));
-            email.Subject = subject;
-            email.Body = new TextPart(TextFormat.Html) { Text = body };
+            var apiKey = _config?["BrevoSettings:ApiKey"] ?? "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";
+            var senderEmail = _config?["BrevoSettings:SenderEmail"] ?? "yohanessetegn24@gmail.com";
+            var senderName = _config?["BrevoSettings:SenderName"] ?? "mkau";
 
-            using var smtp = new SmtpClient();
-            // ከጎግል ሰርቨር ጋር መገናኘት
-            await smtp.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_fromEmail, _appPassword);
-            await smtp.SendAsync(email);
-            await smtp.DisconnectAsync(true);
+            var payload = new
+            {
+                sender = new { name = senderName, email = senderEmail },
+                to = new[] { new { email = toEmail } },
+                subject = subject,
+                htmlContent = body
+            };
 
-            return true;
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email")
+            {
+                Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+            };
+
+            request.Headers.Add("api-key", apiKey);
+
+            var response = await _httpClient.SendAsync(request);
+            return response.IsSuccessStatusCode;
         }
         catch (Exception)
         {
-            return false; // ኢሜይሉ ስህተት ከሆነ ወይም መላክ ካልተቻለ false ይመልሳል
+            return false;
         }
     }
 }
