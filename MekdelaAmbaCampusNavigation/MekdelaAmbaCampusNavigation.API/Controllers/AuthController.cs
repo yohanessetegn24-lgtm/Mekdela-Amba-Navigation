@@ -1,4 +1,4 @@
-﻿using MekdelaAmbaCampusNavigation.Application.DTOs;
+using MekdelaAmbaCampusNavigation.Application.DTOs;
 using MekdelaAmbaCampusNavigation.Infrastructure.Persistence;
 using MekdelaAmbaCampusNavigation.Infrastructure.Services; // 🚀 ለኢሜይል አገልግሎት
 using MekdelaAmbaCampusNavigation.Domain.Entities;
@@ -50,6 +50,12 @@ public class AuthController : ControllerBase
         if (await _context.Users.AnyAsync(u => u.Email.ToLower() == user.Email.ToLower()))
             return BadRequest(new { message = "ይህ ኢሜይል ቀድሞ ተይዟል!" });
 
+        // የምዝገባ ፓስወርድ validation
+        if (!IsValidPassword(user.Password))
+        {
+            return BadRequest(new { message = "ፓስወርዱ ቢያንስ 6 ፊደላትና ቁጥሮች ሆኖ፣ ቢያንስ 2 ፊደል እና ቢያንስ 2 ቁጥር መያዝ አለበት!" });
+        }
+
         string code = new Random().Next(100000, 999999).ToString();
         user.Role = "Admin";
         user.IsActive = false;
@@ -59,8 +65,15 @@ public class AuthController : ControllerBase
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        string body = $"<h2 style='color: #00204E;'>የማረጋገጫ ኮድ፡ {code}</h2>";
-        await _emailService.SendEmailAsync(user.Email, "የአድሚን ምዝገባ", body);
+        string body = $@"
+            <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
+                <h2 style='color: #00204E;'>የመቅደላ አምባ ዩኒቨርሲቲ አድሚን ምዝገባ</h2>
+                <p>የእርስዎ የአካውንት ማረጋገጫ ኮድ፡</p>
+                <h1 style='color: #007bff; letter-spacing: 4px;'>{code}</h1>
+                <p style='color: #888;'>ይህ ኮድ የሚያገለግለው ለ 15 ደቂቃ ብቻ ነው።</p>
+            </div>";
+
+        await _emailService.SendEmailAsync(user.Email, "የአድሚን ምዝገባ ማረጋገጫ ኮድ", body);
         return Ok(new { message = "የማረጋገጫ ኮድ ተልኳል።" });
     }
 
@@ -90,12 +103,20 @@ public class AuthController : ControllerBase
         user.CodeExpiry = DateTime.UtcNow.AddMinutes(10); // ለ10 ደቂቃ የሚቆይ
         await _context.SaveChangesAsync();
 
-        await _emailService.SendEmailAsync(email, "Password Reset Code", $"የእርስዎ ፓስዎርድ ማደሻ ኮድ፡ {resetCode}");
+        string emailBody = $@"
+            <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
+                <h2 style='color: #00204E;'>የይለፍ ቃል (Password) ማደሻ</h2>
+                <p>የይለፍ ቃልዎን ለመቀየር የጠየቁት የማረጋገጫ ኮድ ይኸውልዎት፡</p>
+                <h1 style='color: #d9534f; letter-spacing: 5px;'>{resetCode}</h1>
+                <p style='color: #666;'>ይህ ኮድ ለ <strong>10 ደቂቃ</strong> ብቻ ያገለግላል።</p>
+                <p style='font-size: 12px; color: #999;'>እርስዎ ካልጠየቁ እባክዎ ይህን መልእክት ችላ ይበሉት።</p>
+            </div>";
+
+        await _emailService.SendEmailAsync(email, "Password Reset Code", emailBody);
         return Ok(new { message = "ኮዱ ተልኳል።" });
     }
 
-    // 🚀 5. አዲስ፡ ፓስወርዱን በትክክል በዳታቤዝ የሚቀይረው ክፍል
-    // React (Login.jsx) ላይ ከሰራነው handleResetPassword ጋር እንዲገናኝ ተደርጓል
+    // 5. 🚀 ፓስወርዱን በትክክል በዳታቤዝ የሚቀይረው ክፍል (Validation የተጨመረበት)
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetDto)
     {
@@ -103,17 +124,35 @@ public class AuthController : ControllerBase
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == resetDto.Email.ToLower());
 
-        // የላከው ኮድ በዳታቤዝ ካለው ResetCode ጋር መመሳሰሉን እና ጊዜው አለማለፉን ቼክ ያደርጋል
+        // 1. ኮዱ ትክክል መሆኑንና ጊዜው አለማለፉን ማረጋገጥ
         if (user == null || user.ResetCode != resetDto.Code || user.CodeExpiry < DateTime.UtcNow)
         {
             return BadRequest(new { message = "ያስገቡት ኮድ ስህተት ነው ወይም ጊዜው አልፎበታል!" });
         }
 
-        // አዲሱን ፓስዎርድ መመዝገብ
+        // 2. 🔐 የይለፍ ቃል ህግጋት (Password Validation): ቢያንስ 6 ዲጂት፣ 2 ፊደል፣ 2 ቁጥር
+        if (!IsValidPassword(resetDto.NewPassword))
+        {
+            return BadRequest(new { message = "አዲሱ ፓስወርድ ቢያንስ 6 ሆሄያት ርዝመት፣ ቢያንስ 2 ፊደላት (Letters) እና ቢያንስ 2 ቁጥሮች (Numbers) መያዝ አለበት!" });
+        }
+
+        // 3. አዲሱን ፓስዎርድ መመዝገብ
         user.Password = resetDto.NewPassword;
         user.ResetCode = null; // ኮዱን አንዴ ከተጠቀመበት በኋላ ያጠፋዋል
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "ፓስዎርድዎ በስኬት ተቀይሯል!" });
+    }
+
+    // 🔒 የፓስወርድ ማረጋገጫ ረዳት ሜተድ (Helper Method)
+    private static bool IsValidPassword(string? password)
+    {
+        if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
+            return false;
+
+        int letterCount = password.Count(char.IsLetter);
+        int digitCount = password.Count(char.IsDigit);
+
+        return letterCount >= 2 && digitCount >= 2;
     }
 }
